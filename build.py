@@ -9,4 +9,4 @@ def build_plant(total_cost, duration):
         cum_spend[i:] += total_cost / duration
     return (inc_spend, cum_spend)
 
-def npv(total_cost, duration, mcd, term)
+#def npv(total_cost, duration, mcd, term)

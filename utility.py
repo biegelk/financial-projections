@@ -1,11 +1,13 @@
 import numpy as np
 import csv
+from projections import *
+from constants import *
 
 class Utility:
-    """ Utility class represents financial records for a utility firm """
+    """ Utility class represents financial records for a self.lity firm """
 
     def __init__(self, name, time_horizon, hist):
-        """ Create a new utility instance """
+        """ Create a new self.lity instance """
         # Prime movers
         self.revenues = np.zeros(time_horizon+hist)
         self.fuel = np.zeros(time_horizon+hist)
@@ -61,4 +63,48 @@ class Utility:
                 self.ppe[0:hist]             = row[1:] if row[0] == 'TotalPPE'               else self.ppe[0:hist]
                 self.capex[0:hist]           = row[1:] if row[0] == 'CapEx'                  else self.capex[0:hist]
                 self.delta_wc[0:hist]        = row[1:] if row[0] == 'DeltaWC'                else self.delta_wc[0:hist]
+
+
+    def initialize_income_statement(self):
+        # Operating revenues
+        self.revenues = prime_mover(self.revenues, hist, rev_growth)
+
+        # Operating expenses
+        self.fuel = secondary_mover(self.fuel, self.revenues, hist, fuel_ratio)
+        self.purchased_power = secondary_mover(self.purchased_power, self.revenues, hist, pp_ratio)
+        self.misc_om = secondary_mover(self.misc_om, self.revenues, hist, misc_om_ratio)
+        self.op_expenses = summary_line(self.op_expenses, self.fuel, self.purchased_power, self.misc_om)
+
+        # EBITDA
+        self.ebitda = summary_line(self.ebitda, self.revenues, self.op_expenses*(-1))
+
+        # Other expenses
+        self.depreciation = prime_mover(self.depreciation, hist, 0.0)
+        self.misc_taxes = secondary_mover(self.misc_taxes, self.ebitda, hist, misc_taxes_ratio)
+
+        # EBIT
+        self.ebit = summary_line(self.ebit, self.ebitda, (-1)*self.depreciation, (-1)*self.misc_taxes)
+
+        # Post-EBIT expenses
+        self.afudc = prime_mover(self.afudc, hist, 0.0)
+        self.interest = secondary_mover(self.interest, self.debt, hist, wacd)
+
+        # EBT
+        self.ebt = summary_line(self.ebt, self.ebit, self.afudc, self.interest)
+
+        # Income taxes
+        self.income_tax = secondary_mover(self.income_tax, self.ebt, hist, tax_rate)
+
+        # Net income
+        self.net_income = summary_line(self.net_income, self.ebt, (-1)*self.income_tax)
+
+        # Capital Expenditures
+        self.capex = secondary_mover(self.capex, self.revenues, hist, ppe_growth)
+
+        # Change in Working Capital
+        self.delta_wc = prime_mover(self.delta_wc, hist, 0.0)
+
+        # Free Cash Flow
+        self.fcf = self.net_income + self.depreciation - self.capex - self.delta_wc
+
 

@@ -2,7 +2,6 @@
 #     a nuclear power plant.
 # Author: Katie Biegel
 # Last revision: 2018-05-16
-# note: fix ebt off-by-one error in 2016 and 2017
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,9 +15,12 @@ from build import *
 from constants import *
 from utility import *
 
+# Create utility object, calling correct financial data profile
+# Currently available options: "so" and "scg"
 ut = Utility("so", time_horizon, hist)
 
-(inc_spend, cum_spend) = build_plant(total_cost, init_schedule)
+# Simulate plant construction project and return spend profiles
+(inc_spend, cum_spend) = build_plant(0, init_schedule)
 
 ## GENERATION COST AND REVENUE PROFILE
 # Annual electricity generated
@@ -75,53 +77,17 @@ for i in range(init_schedule):
 
 #=====INCOME STATEMENT==================================================
 #
-# Operating revenues
-ut.revenues = prime_mover(ut.revenues, hist, rev_growth)
-ut.revenues[hist:] += ann_rev
+
+ut.initialize_income_statement()
+
+#ut.revenues[hist:] += ann_rev
 
 # Operating expenses
-ut.fuel = secondary_mover(ut.fuel, ut.revenues, hist, fuel_ratio)
-ut.fuel[hist:] += ann_fuel
-ut.purchased_power = secondary_mover(ut.purchased_power, ut.revenues, hist, pp_ratio)
-ut.misc_om = secondary_mover(ut.misc_om, ut.revenues, hist, misc_om_ratio)
-ut.misc_om[hist:] += ann_om
-ut.op_expenses = summary_line(ut.op_expenses, ut.fuel, ut.purchased_power, ut.misc_om)
+#ut.fuel[hist:] += ann_fuel
+#ut.misc_om[hist:] += ann_om
 
-# EBITDA
-ut.ebitda = summary_line(ut.ebitda, ut.revenues, ut.op_expenses*(-1))
+#ut.capex[:init_schedule] += inc_spend
 
-# Other expenses
-ut.depreciation = prime_mover(ut.depreciation, hist, 0.0)
-ut.misc_taxes = secondary_mover(ut.misc_taxes, ut.ebitda, hist, misc_taxes_ratio)
-
-# EBIT
-ut.ebit = summary_line(ut.ebit, ut.ebitda, (-1)*ut.depreciation, (-1)*ut.misc_taxes)
-
-# Post-EBIT expenses
-ut.afudc = prime_mover(ut.afudc, hist, 0.0)
-ut.interest = secondary_mover(ut.interest, ut.debt, hist, wacd)
-
-# EBT
-ut.ebt = summary_line(ut.ebt, ut.ebit, ut.afudc, (-1)*ut.interest)
-
-# Income taxes
-ut.income_tax = secondary_mover(ut.income_tax, ut.ebt, hist, tax_rate)
-
-# Net income
-ut.net_income = summary_line(ut.net_income, ut.ebt, (-1)*ut.income_tax)
-
-print(ut.net_income)
-
-ut.capex = secondary_mover(ut.capex, ut.revenues, hist, ppe_growth)
-ut.capex[:init_schedule] += inc_spend
-
-print(ut.capex)
-
-ut.delta_wc = prime_mover(ut.delta_wc, hist, 0.0)
-
-ut.fcf = ut.net_income + ut.depreciation - ut.capex - ut.delta_wc
-
-print(ut.fcf)
 
 ################################
 
