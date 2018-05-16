@@ -9,7 +9,7 @@ wacd = 0.05 # historical weighted average cost of debt
 mcd = 0.07  # marginal cost of debt for a nuclear project
 
 ## Project constants
-total_cost = 4000 # $M, cost estimate at 0% completion
+total_cost = 6000 # $M, cost estimate at 0% completion
 init_schedule = 5 # construction schedule, years
 capacity = 2200000 # kW
 cf = 0.9 # capacity factor
