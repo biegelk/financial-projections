@@ -4,10 +4,10 @@ from projections import *
 from constants import *
 
 class Utility:
-    """ Utility class represents financial records for a self.lity firm """
+    """ Utility class represents financial records for a utility firm """
 
     def __init__(self, name, time_horizon, hist):
-        """ Create a new self.lity instance """
+        """ Create a new utility instance """
         # Prime movers
         self.revenues = np.zeros(time_horizon+hist)
         self.fuel = np.zeros(time_horizon+hist)
@@ -18,24 +18,19 @@ class Utility:
         # Secondary movers
         self.misc_om = np.zeros(time_horizon+hist)
         self.misc_taxes = np.zeros(time_horizon+hist)
-        self.tax_expense = np.zeros(time_horizon+hist)
         self.afudc = np.zeros(time_horizon+hist)
-        self.misc_inc_exp = np.zeros(time_horizon+hist)
         self.income_tax = np.zeros(time_horizon+hist)
         self.interest = np.zeros(time_horizon+hist)
         self.debt = np.zeros(time_horizon+hist)
         self.capex = np.zeros(time_horizon+hist)
 
         # Summary lines
-        self.gross_margin = np.zeros(time_horizon+hist)
         self.op_expenses = np.zeros(time_horizon+hist)
         self.ebitda = np.zeros(time_horizon+hist)
-        self.op_expenses = np.zeros(time_horizon+hist)
         self.ebit = np.zeros(time_horizon+hist)
         self.ebt = np.zeros(time_horizon+hist)
         self.net_income = np.zeros(time_horizon+hist)
         self.fcf = np.zeros(time_horizon+hist)
-        self.ebt = np.zeros(time_horizon+hist)
         self.delta_wc = np.zeros(time_horizon+hist)
 
 
@@ -65,7 +60,7 @@ class Utility:
                 self.delta_wc[0:hist]        = row[1:] if row[0] == 'DeltaWC'                else self.delta_wc[0:hist]
 
 
-    def initialize_income_statement(self):
+    def initialize_IS(self):
         # Operating revenues
         self.revenues = prime_mover(self.revenues, hist, rev_growth)
 
@@ -108,3 +103,17 @@ class Utility:
         self.fcf = self.net_income + self.depreciation - self.capex - self.delta_wc
 
 
+
+    def refresh_IS(self):
+        self.misc_om = secondary_mover(self.misc_om, self.revenues, hist, misc_om_ratio)
+        self.misc_taxes = secondary_mover(self.misc_taxes, self.ebitda, hist, misc_taxes_ratio)
+        self.op_expenses = summary_line(self.op_expenses, self.fuel, self.purchased_power, self.misc_om)
+        self.ebitda = summary_line(self.ebitda, self.revenues, self.op_expenses*(-1))
+        self.misc_taxes = secondary_mover(self.misc_taxes, self.ebitda, hist, misc_taxes_ratio)
+        self.ebit = summary_line(self.ebit, self.ebitda, (-1)*self.depreciation, (-1)*self.misc_taxes)
+        self.interest = secondary_mover(self.interest, self.debt, hist, wacd)
+        self.ebt = summary_line(self.ebt, self.ebit, self.afudc, self.interest)
+        self.income_tax = secondary_mover(self.income_tax, self.ebt, hist, tax_rate)
+        self.net_income = summary_line(self.net_income, self.ebt, (-1)*self.income_tax)
+        self.capex = secondary_mover(self.capex, self.revenues, hist, ppe_growth)
+        self.fcf = summary_line(self.net_income, self.depreciation, (-1)*self.capex, (-1)*self.delta_wc)

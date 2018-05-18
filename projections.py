@@ -12,6 +12,7 @@ def secondary_mover(slist, plist, hist, ratio):
 
 def summary_line(smlist, *args):
     """Sum up *args to produce a summary line item"""
+    smlist = 0
     for arg in args:
         smlist += arg
     return smlist
