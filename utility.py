@@ -85,7 +85,7 @@ class Utility:
         self.interest = secondary_mover(self.interest, self.debt, hist, wacd)
 
         # EBT
-        self.ebt = summary_line(self.ebt, self.ebit, self.afudc, self.interest)
+        self.ebt = summary_line(self.ebt, self.ebit, self.afudc, (-1)*self.interest)
 
         # Income taxes
         self.income_tax = secondary_mover(self.income_tax, self.ebt, hist, tax_rate)
@@ -95,6 +95,9 @@ class Utility:
 
         # Capital Expenditures
         self.capex = secondary_mover(self.capex, self.revenues, hist, ppe_growth)
+
+        # Debt
+        self.debt = prime_mover(self.debt, hist, 0.0)
 
         # Change in Working Capital
         self.delta_wc = prime_mover(self.delta_wc, hist, 0.0)
@@ -112,8 +115,30 @@ class Utility:
         self.misc_taxes = secondary_mover(self.misc_taxes, self.ebitda, hist, misc_taxes_ratio)
         self.ebit = summary_line(self.ebit, self.ebitda, (-1)*self.depreciation, (-1)*self.misc_taxes)
         self.interest = secondary_mover(self.interest, self.debt, hist, wacd)
-        self.ebt = summary_line(self.ebt, self.ebit, self.afudc, self.interest)
+        self.ebt = summary_line(self.ebt, self.ebit, self.afudc, (-1)*self.interest)
         self.income_tax = secondary_mover(self.income_tax, self.ebt, hist, tax_rate)
         self.net_income = summary_line(self.net_income, self.ebt, (-1)*self.income_tax)
         self.capex = secondary_mover(self.capex, self.revenues, hist, ppe_growth)
         self.fcf = summary_line(self.net_income, self.depreciation, (-1)*self.capex, (-1)*self.delta_wc)
+
+
+    def write_IS_csv(self):
+        with open('checkfile.csv', 'w') as checkfile:
+            writer = csv.writer(checkfile, delimiter = ',', quotechar = '\"')
+            writer.writerow(['', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027'])
+            writer.writerow(np.concatenate((['Revenues'],self.revenues)))
+            writer.writerow(np.concatenate((['Fuel'], self.fuel)))
+            writer.writerow(np.concatenate((['Purchased Power'], self.purchased_power)))
+            writer.writerow(np.concatenate((['Misc OM'], self.misc_om)))
+            writer.writerow(np.concatenate((['Operating Expenses'], self.op_expenses)))
+            writer.writerow(np.concatenate((['EBITDA'], self.ebitda)))
+            writer.writerow(np.concatenate((['Depreciation'], self.depreciation)))
+            writer.writerow(np.concatenate((['Non-Income Taxes'], self.misc_taxes)))
+            writer.writerow(np.concatenate((['EBIT'], self.ebit)))
+            writer.writerow(np.concatenate((['AFUDC'], self.afudc)))
+            writer.writerow(np.concatenate((['Interest Expense'], self.interest)))
+            writer.writerow(np.concatenate((['EBT'], self.ebt)))
+            writer.writerow(np.concatenate((['Income Tax'], self.income_tax)))
+            writer.writerow(np.concatenate((['Net Income'], self.net_income)))
+            writer.writerow('\n')
+            writer.writerow(np.concatenate((['Total Debt'], self.debt)))

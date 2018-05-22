@@ -3,7 +3,8 @@
 # Author: Katie Biegel
 # Last revision: 2018-05-16
 
-active = 1
+# Boolean to enable probabilistic delay (uniform [1,2]*initial estimate)
+rand_delay = 1
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,37 +24,33 @@ ut = Utility("so", time_horizon, hist)
 ut.initialize_IS()
 
 # Simulate plant construction project and return spend profiles
-npp = Project()
-npp.build_plant(active)
+npp = Project(rand_delay)
+npp.build_plant()
 
 # Compute project LCOE
-npp.get_lcoe(active)
+npp.get_lcoe()
 print("LCOE = ",npp.lcoe,"c/kWh")
 
 # Compute project NPV
-npp.get_npv(active)
+npp.get_npv()
 print("NPV = $", npp.npv,"M")
 
 # Add CapEx to PPE
-ut.ppe[:init_schedule] += npp.cum_spend
+ut.ppe[:m.ceil(npp.duration)] += npp.cum_spend
 ut.ppe = prime_mover(ut.ppe, hist, ppe_growth)
 
 # Account for plant capital cost effects
-for i in range(npp.duration):
+for i in range(m.ceil(npp.duration)-1):
     ut.debt[i] += npp.cum_spend[i]/2
 
 # Account for plant operational outcomes
-if active:
-    ut.revenues[npp.duration:] += npp.annual_revenue
-    ut.fuel[npp.duration:] += npp.annual_fuel_cost
-    ut.misc_om[npp.duration:] += npp.annual_om_cost
-else:
-    pass
+ut.revenues[m.ceil(npp.duration)-1:] += npp.annual_revenue
+ut.fuel[m.ceil(npp.duration)-1:] += npp.annual_fuel_cost
+ut.misc_om[m.ceil(npp.duration)-1:] += npp.annual_om_cost
 
-print(ut.debt)
 
 ut.refresh_IS()
 
-print(ut.debt)
-
 #ut.capex[:init_schedule] += inc_spend
+
+ut.write_IS_csv()
