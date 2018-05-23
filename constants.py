@@ -3,6 +3,10 @@ time_horizon = 10
 current_year = 2018
 hist = 6
 
+# Model behavioral booleans
+rand_delay = 1 # Add probabilistic (uniform) project delay?
+cap_interest = 1 # Capitalize interest during construction?
+
 # Firm financial constants
 tax_rate = 0.335
 wacd = 0.05 # historical weighted average cost of debt

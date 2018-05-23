@@ -16,6 +16,7 @@ class Project:
             self.duration = init_schedule
         self.inc_spend = np.zeros(m.ceil(self.duration))
         self.cum_spend = np.zeros(m.ceil(self.duration))
+        self.idc = np.zeros(m.ceil(self.duration))
         self.annual_capital_payment = 0.0
         self.capital_npv = 0
         self.npv = 0
@@ -31,21 +32,36 @@ class Project:
         self.om_npv = 0
 
 
-    def spend_profile(self):
-        print("duration = ", self.duration)
+    def spend_profile(self, cap_interest):
+        # Set incremental spend
         for i in range(m.floor(self.duration)):
             self.inc_spend[i] = self.total_cost*(-1/2)*(m.cos(m.pi*(i+1)/self.duration) - m.cos(m.pi*i/self.duration))
         self.inc_spend[-1] = self.total_cost - np.sum(self.inc_spend[:-1])
-        print(self.inc_spend)
+
+        # Tally cumulative spend
         for i in range(m.ceil(self.duration)):
             for j in range(m.ceil(self.duration)):
                 if j >= i:
                     self.cum_spend[j] += self.inc_spend[i]
-        print(self.cum_spend)
+
+        # If capitalizing interest, add IDC to year 0's project spend
+        self.cum_spend[0] += self.cum_spend[0]/2 * mcd if cap_interest else self.cum_spend[0]
+        for i in range(1,m.ceil(self.duration)):
+            self.idc[i] = (self.cum_spend[i]+self.cum_spend[i-1])/2 * mcd
+            # If we're capitalizing interest, add IDC to each year's project spend
+            self.cum_spend[i] += self.idc[i] if cap_interest else self.cum_spend[i]
+
+        # Update total final project cost
+        self.total_cost = self.cum_spend[-1]
+
+        print("duration = ", self.duration)
+        print("total cost = ", self.total_cost)
 
 
-    def build_plant(self):
-        self.spend_profile()
+
+
+    def build_plant(self, cap_interest):
+        self.spend_profile(cap_interest)
         self.annual_capital_payment = self.total_cost * mcd / (1 - (1+mcd)**(-term))
 
 

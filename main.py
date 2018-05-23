@@ -3,9 +3,6 @@
 # Author: Katie Biegel
 # Last revision: 2018-05-16
 
-# Boolean to enable probabilistic delay (uniform [1,2]*initial estimate)
-rand_delay = 1
-
 import numpy as np
 import matplotlib.pyplot as plt
 from random import *
@@ -25,7 +22,7 @@ ut.initialize_IS()
 
 # Simulate plant construction project and return spend profiles
 npp = Project(rand_delay)
-npp.build_plant()
+npp.build_plant(cap_interest)
 
 # Compute project LCOE
 npp.get_lcoe()
