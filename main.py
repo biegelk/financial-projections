@@ -36,20 +36,21 @@ npp.get_npv()
 print("NPV = $", npp.npv,"M")
 
 # Add CapEx to PPE
-ut.ppe[:m.ceil(npp.duration)] += npp.cum_spend
-ut.ppe = prime_mover(ut.ppe, hist, ppe_growth)
+#ut.ppe[:m.ceil(npp.duration)] += npp.cum_spend
+#ut.ppe = prime_mover(ut.ppe, hist, ppe_growth)
 
 # Account for plant capital cost effects
-for i in range(m.ceil(npp.duration)-1):
-    ut.debt[i] += npp.cum_spend[i]/2
+#for i in range(m.ceil(npp.duration)-1):
+#    ut.debt[i] += npp.cum_spend[i]/2
 
 # Account for plant operational outcomes
-ut.revenues[m.ceil(npp.duration)-1:] += npp.annual_revenue
-ut.fuel[m.ceil(npp.duration)-1:] += npp.annual_fuel_cost
-ut.misc_om[m.ceil(npp.duration)-1:] += npp.annual_om_cost
+#ut.revenues[m.ceil(npp.duration)-1:] += npp.annual_revenue
+#ut.fuel[m.ceil(npp.duration)-1:] += npp.annual_fuel_cost
+#ut.misc_om[m.ceil(npp.duration)-1:] += npp.annual_om_cost
 
+ut.finance_project(npp)
 
-ut.refresh_IS()
+ut.refresh_IS(hist)
 
 #ut.capex[:init_schedule] += inc_spend
 

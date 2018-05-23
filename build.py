@@ -22,8 +22,8 @@ class Project:
 
         # Operational outcomes
         self.annual_generation = capacity * cf * 8766.0 # kWh/yr
-        self.annual_fuel_cost = 151.0
-        self.annual_om_cost = 139.0
+        self.annual_fuel_cost = 151.0 # $M/yr
+        self.annual_om_cost = 139.0   # $M/yr
         self.annual_revenue = power_price * self.annual_generation / 1e6
         self.lcoe = 0.0
         self.revenue_npv = 0

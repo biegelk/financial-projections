@@ -1,5 +1,6 @@
 import numpy as np
 import csv
+import math as m
 from projections import *
 from constants import *
 
@@ -32,6 +33,10 @@ class Utility:
         self.net_income = np.zeros(time_horizon+hist)
         self.fcf = np.zeros(time_horizon+hist)
         self.delta_wc = np.zeros(time_horizon+hist)
+
+        # Capital Structure
+        self.debt_fraction = 0.5
+        self.equity_fraction = 1 - self.debt_fraction
 
 
         # Load financial data from csv
@@ -107,14 +112,14 @@ class Utility:
 
 
 
-    def refresh_IS(self):
+    def refresh_IS(self, hist):
         self.misc_om = secondary_mover(self.misc_om, self.revenues, hist, misc_om_ratio)
         self.misc_taxes = secondary_mover(self.misc_taxes, self.ebitda, hist, misc_taxes_ratio)
         self.op_expenses = summary_line(self.op_expenses, self.fuel, self.purchased_power, self.misc_om)
         self.ebitda = summary_line(self.ebitda, self.revenues, self.op_expenses*(-1))
         self.misc_taxes = secondary_mover(self.misc_taxes, self.ebitda, hist, misc_taxes_ratio)
         self.ebit = summary_line(self.ebit, self.ebitda, (-1)*self.depreciation, (-1)*self.misc_taxes)
-        self.interest = secondary_mover(self.interest, self.debt, hist, wacd)
+        self.interest = secondary_mover(self.interest, self.debt, 0, wacd)
         self.ebt = summary_line(self.ebt, self.ebit, self.afudc, (-1)*self.interest)
         self.income_tax = secondary_mover(self.income_tax, self.ebt, hist, tax_rate)
         self.net_income = summary_line(self.net_income, self.ebt, (-1)*self.income_tax)
@@ -142,3 +147,20 @@ class Utility:
             writer.writerow(np.concatenate((['Net Income'], self.net_income)))
             writer.writerow('\n')
             writer.writerow(np.concatenate((['Total Debt'], self.debt)))
+
+
+    def finance_project(self, npp):
+        # Add CapEx to PPE
+        self.ppe[:m.ceil(npp.duration)] += npp.cum_spend
+        self.ppe = prime_mover(self.ppe, m.ceil(npp.duration), ppe_growth)
+
+        # Account for plant capital cost effects
+        for i in range(m.ceil(npp.duration)):
+            self.debt[i] += npp.cum_spend[i] * self.debt_fraction
+        self.debt = prime_mover(self.debt, m.ceil(npp.duration), 0.0)
+
+        # Account for plant operational outcomes
+        self.revenues[m.ceil(npp.duration)-1:] += npp.annual_revenue
+        self.fuel[m.ceil(npp.duration)-1:] += npp.annual_fuel_cost
+        self.misc_om[m.ceil(npp.duration)-1:] += npp.annual_om_cost
+
