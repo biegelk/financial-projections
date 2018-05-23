@@ -15,13 +15,16 @@ class Utility:
         self.purchased_power = np.zeros(time_horizon+hist)
         self.depreciation = np.zeros(time_horizon+hist)
         self.ppe = np.zeros(time_horizon+hist)
+        self.npp_debt = np.zeros(time_horizon+hist)
+        self.baseline_debt = np.zeros(time_horizon+hist)
 
         # Secondary movers
         self.misc_om = np.zeros(time_horizon+hist)
         self.misc_taxes = np.zeros(time_horizon+hist)
         self.afudc = np.zeros(time_horizon+hist)
         self.income_tax = np.zeros(time_horizon+hist)
-        self.interest = np.zeros(time_horizon+hist)
+        self.npp_interest = np.zeros(time_horizon+hist)
+        self.baseline_interest = np.zeros(time_horizon+hist)
         self.debt = np.zeros(time_horizon+hist)
         self.capex = np.zeros(time_horizon+hist)
 
@@ -29,8 +32,10 @@ class Utility:
         self.op_expenses = np.zeros(time_horizon+hist)
         self.ebitda = np.zeros(time_horizon+hist)
         self.ebit = np.zeros(time_horizon+hist)
+        self.interest = np.zeros(time_horizon+hist)
         self.ebt = np.zeros(time_horizon+hist)
         self.net_income = np.zeros(time_horizon+hist)
+        self.total_debt = np.zeros(time_horizon+hist)
         self.fcf = np.zeros(time_horizon+hist)
         self.delta_wc = np.zeros(time_horizon+hist)
 
@@ -57,16 +62,20 @@ class Utility:
                 self.depreciation[0:hist]    = row[1:] if row[0] == 'DepAmort'               else self.depreciation[0:hist]
                 self.misc_taxes[0:hist]      = row[1:] if row[0] == 'NonIncomeTaxes'         else self.misc_taxes[0:hist]
                 self.afudc[0:hist]           = row[1:] if row[0] == 'AFUDC'                  else self.afudc[0:hist]
-                self.interest[0:hist]        = row[1:] if row[0] == 'InterestExpense'        else self.interest[0:hist]
+                self.baseline_interest[0:hist] = row[1:] if row[0] == 'InterestExpense'      else self.baseline_interest[0:hist]
                 self.income_tax[0:hist]      = row[1:] if row[0] == 'IncomeTaxes'            else self.income_tax[0:hist]
-                self.debt[0:hist]            = row[1:] if row[0] == 'LTD'                    else self.debt[0:hist]
+                self.baseline_debt[0:hist]   = row[1:] if row[0] == 'LTD'                    else self.baseline_debt[0:hist]
                 self.ppe[0:hist]             = row[1:] if row[0] == 'TotalPPE'               else self.ppe[0:hist]
                 self.capex[0:hist]           = row[1:] if row[0] == 'CapEx'                  else self.capex[0:hist]
                 self.delta_wc[0:hist]        = row[1:] if row[0] == 'DeltaWC'                else self.delta_wc[0:hist]
 
 
     def initialize_IS(self):
-        # Operating revenues
+        # Debt
+        self.baseline_debt = prime_mover(self.baseline_debt, hist, 0.0)
+        self.total_debt = summary_line(self.total_debt, self.baseline_debt, self.npp_debt)
+
+       # Operating revenues
         self.revenues = prime_mover(self.revenues, hist, rev_growth)
 
         # Operating expenses
@@ -87,7 +96,9 @@ class Utility:
 
         # Post-EBIT expenses
         self.afudc = prime_mover(self.afudc, hist, 0.0)
-        self.interest = secondary_mover(self.interest, self.debt, hist, wacd)
+        self.baseline_interest = secondary_mover(self.baseline_interest, self.baseline_debt, hist, wacd)
+        self.npp_interest = secondary_mover(self.npp_interest, self.npp_debt, hist, mcd)
+        self.interest = summary_line(self.interest, self.baseline_interest, self.npp_interest)
 
         # EBT
         self.ebt = summary_line(self.ebt, self.ebit, self.afudc, (-1)*self.interest)
@@ -101,9 +112,6 @@ class Utility:
         # Capital Expenditures
         self.capex = secondary_mover(self.capex, self.revenues, hist, ppe_growth)
 
-        # Debt
-        self.debt = prime_mover(self.debt, hist, 0.0)
-
         # Change in Working Capital
         self.delta_wc = prime_mover(self.delta_wc, hist, 0.0)
 
@@ -113,13 +121,16 @@ class Utility:
 
 
     def refresh_IS(self, hist):
+        self.total_debt = summary_line(self.total_debt, self.baseline_debt, self.npp_debt)
         self.misc_om = secondary_mover(self.misc_om, self.revenues, hist, misc_om_ratio)
         self.misc_taxes = secondary_mover(self.misc_taxes, self.ebitda, hist, misc_taxes_ratio)
         self.op_expenses = summary_line(self.op_expenses, self.fuel, self.purchased_power, self.misc_om)
         self.ebitda = summary_line(self.ebitda, self.revenues, self.op_expenses*(-1))
         self.misc_taxes = secondary_mover(self.misc_taxes, self.ebitda, hist, misc_taxes_ratio)
         self.ebit = summary_line(self.ebit, self.ebitda, (-1)*self.depreciation, (-1)*self.misc_taxes)
-        self.interest = secondary_mover(self.interest, self.debt, 0, wacd)
+        self.baseline_interest = secondary_mover(self.baseline_interest, self.baseline_debt, 0, wacd)
+        self.npp_interest = secondary_mover(self.npp_interest, self.npp_debt, 0, mcd)
+        self.interest = summary_line(self.interest, self.baseline_interest, self.npp_interest)
         self.ebt = summary_line(self.ebt, self.ebit, self.afudc, (-1)*self.interest)
         self.income_tax = secondary_mover(self.income_tax, self.ebt, hist, tax_rate)
         self.net_income = summary_line(self.net_income, self.ebt, (-1)*self.income_tax)
@@ -146,18 +157,22 @@ class Utility:
             writer.writerow(np.concatenate((['Income Tax'], self.income_tax)))
             writer.writerow(np.concatenate((['Net Income'], self.net_income)))
             writer.writerow('\n')
-            writer.writerow(np.concatenate((['Total Debt'], self.debt)))
+            writer.writerow(np.concatenate((['Baseline Debt'], self.baseline_debt)))
+            writer.writerow(np.concatenate((['Project Debt'], self.npp_debt)))
+            writer.writerow(np.concatenate((['Total Debt'], self.total_debt)))
 
 
     def finance_project(self, npp):
-        # Add CapEx to PPE
+        # Add NPP spend to PPE
         self.ppe[:m.ceil(npp.duration)] += npp.cum_spend
         self.ppe = prime_mover(self.ppe, m.ceil(npp.duration), ppe_growth)
 
-        # Account for plant capital cost effects
-        for i in range(m.ceil(npp.duration)):
-            self.debt[i] += npp.cum_spend[i] * self.debt_fraction
-        self.debt = prime_mover(self.debt, m.ceil(npp.duration), 0.0)
+        # Add NPP spend to CapEx
+        self.capex[:m.ceil(npp.duration)] += npp.cum_spend
+
+        # Account for project-related debt
+        self.npp_debt[:m.ceil(npp.duration)] = npp.cum_spend * self.debt_fraction
+        self.npp_debt = prime_mover(self.npp_debt, m.ceil(npp.duration), 0.0)
 
         # Account for plant operational outcomes
         self.revenues[m.ceil(npp.duration)-1:] += npp.annual_revenue
