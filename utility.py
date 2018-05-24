@@ -199,11 +199,12 @@ class Utility:
 
         # Add NPP spend to CapEx and Change in Working Capital
         self.capex[:m.ceil(npp.duration)] += npp.inc_spend
-#        self.delta_wc[:m.ceil(npp.duration)] += npp.inc_spend
+#        self.delta_wc[:m.ceil(npp.duration)] -= 2400
+        ### SKETCHY--FIX
+        self.delta_wc -= 2400
 
         # Straight-line depreciation once project is complete
-        for i in range(m.floor(npp.duration),time_horizon+hist):
-            #self.depreciation[m.floor(npp.duration):] += npp.total_cost / life
+        for i in range(m.ceil(npp.duration),time_horizon+hist):
             self.depreciation[i:] += npp.total_cost / econ_life
 
         # Account for project-related debt
