@@ -4,7 +4,7 @@ current_year = 2018
 hist = 6
 
 # Model behavioral booleans
-rand_esc = 1 # Activate probabilistic (simple uniform) project delay?
+rand_esc = 0 # Activate probabilistic (simple uniform) project delay?
 rand_delay = 1 # Activate probabilistic (uniform) project delay?
 cap_interest = 1 # Capitalize interest during construction?
 
@@ -33,7 +33,9 @@ cgamma_params = [[1.236, 1/2.942], [19.893, 1/21.711], [50.734, 1/24.857], [17.4
 cgamma_fix = [0, .73, 1.54, 0.90, 0]
 
 sched_esc = [[0.063, 0.189, 0.379], [0.048, 0.116, 0.217], [0.049, 0.099, 00.174], [0.038, 0.066, 0.108], [0.048, 0.117, 0.220]]
-sgamma_params = [[2.422, 1/2.387], [4.219, 1/6.031], [21.900, 1/54.084], [3.555, 1/4.405], [49.758, 1/38.479]]
+#sgamma_params = [[2.422, 1/2.387], [4.219, 1/6.031], [21.900, 1/54.084], [3.555, 1/4.405], [49.758, 1/38.479]]
+#sgamma_params = [[2.422, .4], [4.219, .15], [4.00, .02], [3.555, .2], [4.758, .03]]
+sgamma_params = [[1, .5], [1,.5], [1,.5], [1,.5], [1,.5]]
 sgamma_fix = [1.732, 1.06, .72, .356, 1.131]
 
 # Growth rates

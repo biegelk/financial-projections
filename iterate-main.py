@@ -36,11 +36,14 @@ for i in range(num_iterations):
 
     # Simulate plant construction project and return spend profiles
     npp = Project()
-    npp.delay_project()
     npp.build_plant()
 
     # Compute project LCOE
     npp.get_lcoe()
+    if i == 495:
+        print(npp.idc)
+        print(npp.cum_spend)
+        print("annual capital payment = $", npp.annual_capital_payment)
 
     # Compute project NPV
     npp.get_npv()
@@ -56,6 +59,9 @@ for i in range(num_iterations):
     npvs[i] = npp.npv
     lcoes[i] = npp.lcoe
 
+    if i == 495:
+        ut.write_csv()
+
     for j in range(time_horizon + hist):
         if ut.fcf[j] <= 0.0:
             is_cash_shortage[i] += 1
@@ -67,6 +73,7 @@ for j in range(num_iterations):
 
 print("average cost = ", np.mean(costs))
 print("average duration = ", np.mean(durations))
+print("stdev duration = ", np.std(durations))
 print("average npv = ", np.mean(npvs))
 print("average lcoe = ", np.mean(lcoes))
 print("Average cash shortage years within forecast period = ", np.sum(is_cash_shortage) / num_iterations)

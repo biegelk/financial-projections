@@ -132,7 +132,7 @@ class Utility:
         self.ebt = summary_line(self.ebt, self.ebit, self.afudc, (-1)*self.interest)
 
         # Income taxes
-        self.income_tax = secondary_mover(self.income_tax, self.ebt, hist, tax_rate)
+        self.income_tax = secondary_mover(self.income_tax, self.ebt, hist-1, tax_rate)
 
         # Net income
         self.net_income = summary_line(self.net_income, self.ebt, (-1)*self.income_tax)
@@ -151,7 +151,7 @@ class Utility:
         self.npp_interest = secondary_mover(self.npp_interest, self.npp_debt, 0, mcd)
         self.interest = summary_line(self.interest, self.baseline_interest, self.npp_interest)
         self.ebt = summary_line(self.ebt, self.ebit, self.afudc, (-1)*self.interest)
-        self.income_tax = secondary_mover(self.income_tax, self.ebt, hist, tax_rate)
+        self.income_tax = secondary_mover(self.income_tax, self.ebt, hist-1, tax_rate)
         self.net_income = summary_line(self.net_income, self.ebt, (-1)*self.income_tax)
 
     def write_csv(self):
@@ -201,7 +201,7 @@ class Utility:
         self.capex[:m.ceil(npp.duration)] += npp.inc_spend
 #        self.delta_wc[:m.ceil(npp.duration)] -= 2400
         ### SKETCHY--FIX
-        self.delta_wc -= 2400
+        self.delta_wc -= 2000
 
         # Straight-line depreciation once project is complete
         for i in range(int(m.ceil(npp.duration)),time_horizon+hist):
