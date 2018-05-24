@@ -4,13 +4,15 @@ current_year = 2018
 hist = 6
 
 # Model behavioral booleans
-rand_delay = 1 # Add probabilistic (uniform) project delay?
+rand_esc = 1 # Activate probabilistic (simple uniform) project delay?
+rand_delay = 1 # Activate probabilistic (uniform) project delay?
 cap_interest = 1 # Capitalize interest during construction?
 
 # Firm financial constants
 tax_rate = 0.335
 wacd = 0.05 # historical weighted average cost of debt
 mcd = 0.07  # marginal cost of debt for a nuclear project
+min_dps = 2.3
 
 ## Project constants
 total_cost = 6000 # $M, cost estimate at 0% completion
@@ -21,6 +23,7 @@ d = (9.25+4.)/2./100. # wacc/discount rate
 term = 30 # years
 power_price = 0.06 # $/kWh
 life = 40 # years
+econ_life = 25 # years; economic useful life for straight-line depreciation
 
 # Cost escalation parameters
 # Completion milestones
@@ -34,6 +37,7 @@ rev_growth  = 0.016  # % change YOY
 fuel_growth = 0.252  # % of revenues
 pp_growth   = 0.042  # % of revenues
 ppe_growth  = 0.03   # % change YOY
+dps_growth  = 0.03   # % change YOY
 
 # Secondary ratios
 misc_om_ratio = 0.256  # to revenues

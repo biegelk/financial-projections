@@ -9,14 +9,15 @@ class Utility:
 
     def __init__(self, name, time_horizon, hist):
         """ Create a new utility instance """
+
+        ## INCOME STATEMENT
+
         # Prime movers
         self.revenues = np.zeros(time_horizon+hist)
         self.fuel = np.zeros(time_horizon+hist)
         self.purchased_power = np.zeros(time_horizon+hist)
         self.depreciation = np.zeros(time_horizon+hist)
         self.ppe = np.zeros(time_horizon+hist)
-        self.npp_debt = np.zeros(time_horizon+hist)
-        self.baseline_debt = np.zeros(time_horizon+hist)
 
         # Secondary movers
         self.misc_om = np.zeros(time_horizon+hist)
@@ -35,9 +36,24 @@ class Utility:
         self.interest = np.zeros(time_horizon+hist)
         self.ebt = np.zeros(time_horizon+hist)
         self.net_income = np.zeros(time_horizon+hist)
+
+
+        ## BALANCE SHEET
+        self.npp_debt = np.zeros(time_horizon+hist)
+        self.baseline_debt = np.zeros(time_horizon+hist)
         self.total_debt = np.zeros(time_horizon+hist)
-        self.fcf = np.zeros(time_horizon+hist)
+
+
+        ## CASH FLOW STATEMENT
+        self.dividends = np.zeros(time_horizon+hist)
+        self.baseline_delta_wc = np.zeros(time_horizon+hist)
         self.delta_wc = np.zeros(time_horizon+hist)
+        self.fcf = np.zeros(time_horizon+hist)
+        self.shares_outstanding = np.zeros(time_horizon+hist)
+        self.dps = np.zeros(time_horizon+hist)
+
+
+
 
         # Capital Structure
         self.debt_fraction = 0.5
@@ -46,15 +62,15 @@ class Utility:
 
         # Load financial data from csv
         if name == "so":
-            datafile = "./profiles/income-statement-so.csv"
+            isfile = "./profiles/income-statement-so.csv"
         elif name == "scg":
-            datafile = "./profiles/income-statement-scg.csv"
+            isfile = "./profiles/income-statement-scg.csv"
         else:
-            print("Utility not available")
+            print("Utility IS not available")
             exit()
-        with open(datafile, 'r') as df:
-            fin_data = csv.reader(df, delimiter = ',', quotechar = '\"')
-            for row in fin_data:
+        with open(isfile, 'r') as df:
+            is_data = csv.reader(df, delimiter = ',', quotechar = '\"')
+            for row in is_data:
                 self.revenues[0:hist]        = row[1:] if row[0] == 'TotalOperatingRevenues' else self.revenues[0:hist]
                 self.fuel[0:hist]            = row[1:] if row[0] == 'Fuel'                   else self.fuel[0:hist]
                 self.purchased_power[0:hist] = row[1:] if row[0] == 'PurchasedPower'         else self.purchased_power[0:hist]
@@ -68,6 +84,18 @@ class Utility:
                 self.ppe[0:hist]             = row[1:] if row[0] == 'TotalPPE'               else self.ppe[0:hist]
                 self.capex[0:hist]           = row[1:] if row[0] == 'CapEx'                  else self.capex[0:hist]
                 self.delta_wc[0:hist]        = row[1:] if row[0] == 'DeltaWC'                else self.delta_wc[0:hist]
+        if name == "so":
+            cfsfile = "./profiles/cash-flow-statement-so.csv"
+        else:
+            print("Utility CFS not available")
+        with open(cfsfile, 'r') as df:
+            cfs_data = csv.reader(df, delimiter = ',', quotechar = '\"')
+            for row in cfs_data:
+                self.dividends[0:hist] = row[1:] if row[0] == 'Dividends' else self.dividends[0:hist]
+                self.shares_outstanding[0:hist] = row[1:] if row[0] == 'SharesOutstanding' else self.shares_outstanding[0:hist]
+                self.capex[0:hist] = row[1:] if row[0] == 'CapEx' else self.capex[0:hist]
+                self.delta_wc[0:hist] = row[1:] if row[0] == 'DeltaWC' else self.delta_wc[0:hist]
+
 
 
     def initialize_IS(self):
@@ -109,15 +137,6 @@ class Utility:
         # Net income
         self.net_income = summary_line(self.net_income, self.ebt, (-1)*self.income_tax)
 
-        # Capital Expenditures
-        self.capex = secondary_mover(self.capex, self.revenues, hist, ppe_growth)
-
-        # Change in Working Capital
-        self.delta_wc = prime_mover(self.delta_wc, hist, 0.0)
-
-        # Free Cash Flow
-        self.fcf = self.net_income + self.depreciation - self.capex - self.delta_wc
-
 
 
     def refresh_IS(self, hist):
@@ -134,14 +153,13 @@ class Utility:
         self.ebt = summary_line(self.ebt, self.ebit, self.afudc, (-1)*self.interest)
         self.income_tax = secondary_mover(self.income_tax, self.ebt, hist, tax_rate)
         self.net_income = summary_line(self.net_income, self.ebt, (-1)*self.income_tax)
-        self.capex = secondary_mover(self.capex, self.revenues, hist, ppe_growth)
-        self.fcf = summary_line(self.net_income, self.depreciation, (-1)*self.capex, (-1)*self.delta_wc)
 
-
-    def write_IS_csv(self):
+    def write_csv(self):
         with open('checkfile.csv', 'w') as checkfile:
             writer = csv.writer(checkfile, delimiter = ',', quotechar = '\"')
+            # Income Statement
             writer.writerow(['', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027'])
+            writer.writerow(['INCOME STATEMENT'])
             writer.writerow(np.concatenate((['Revenues'],self.revenues)))
             writer.writerow(np.concatenate((['Fuel'], self.fuel)))
             writer.writerow(np.concatenate((['Purchased Power'], self.purchased_power)))
@@ -157,18 +175,36 @@ class Utility:
             writer.writerow(np.concatenate((['Income Tax'], self.income_tax)))
             writer.writerow(np.concatenate((['Net Income'], self.net_income)))
             writer.writerow('\n')
+            # Balance Sheet
+            writer.writerow(['', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027'])
+            writer.writerow(['BALANCE SHEET'])
             writer.writerow(np.concatenate((['Baseline Debt'], self.baseline_debt)))
             writer.writerow(np.concatenate((['Project Debt'], self.npp_debt)))
             writer.writerow(np.concatenate((['Total Debt'], self.total_debt)))
+            writer.writerow('\n')
+            # Cash Flow Statement
+            writer.writerow(['', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027'])
+            writer.writerow(np.concatenate((['Delta Working Capital'], self.delta_wc)))
+            writer.writerow(np.concatenate((['CapEx'], self.capex)))
+            writer.writerow(np.concatenate((['Free Cash Flow'], self.fcf)))
+            writer.writerow(np.concatenate((['Dividends Paid'], self.dividends)))
+            writer.writerow(np.concatenate((['Shares Outstanding'], self.shares_outstanding)))
+            writer.writerow(np.concatenate((['Dividend Yield'], self.dps)))
 
 
-    def finance_project(self, npp):
+    def incorporate_project(self, npp):
         # Add NPP spend to PPE
         self.ppe[:m.ceil(npp.duration)] += npp.cum_spend
         self.ppe = prime_mover(self.ppe, m.ceil(npp.duration), ppe_growth)
 
-        # Add NPP spend to CapEx
-        self.capex[:m.ceil(npp.duration)] += npp.cum_spend
+        # Add NPP spend to CapEx and Change in Working Capital
+        self.capex[:m.ceil(npp.duration)] += npp.inc_spend
+#        self.delta_wc[:m.ceil(npp.duration)] += npp.inc_spend
+
+        # Straight-line depreciation once project is complete
+        for i in range(m.floor(npp.duration),time_horizon+hist):
+            #self.depreciation[m.floor(npp.duration):] += npp.total_cost / life
+            self.depreciation[i:] += npp.total_cost / econ_life
 
         # Account for project-related debt
         self.npp_debt[:m.ceil(npp.duration)] = npp.cum_spend * self.debt_fraction
@@ -178,4 +214,30 @@ class Utility:
         self.revenues[m.ceil(npp.duration)-1:] += npp.annual_revenue
         self.fuel[m.ceil(npp.duration)-1:] += npp.annual_fuel_cost
         self.misc_om[m.ceil(npp.duration)-1:] += npp.annual_om_cost
+
+
+    def initialize_CFS(self):
+        # Dividends
+        self.dividends = prime_mover(self.dividends, hist, dps_growth)
+
+        # Capital Expenditures
+        self.capex = prime_mover(self.capex, hist, ppe_growth)
+
+        # Change in Working Capital
+        self.baseline_delta_wc = prime_mover(self.delta_wc, hist, 0.0)
+        self.delta_wc = summary_line(self.delta_wc, self.baseline_delta_wc)
+
+        # Free Cash Flow
+        self.fcf = summary_line(self.fcf, self.net_income, self.depreciation, (-1)*self.capex, (-1)*self.delta_wc)
+
+        # Shares outstanding
+        self.shares_outstanding = prime_mover(self.shares_outstanding, hist, 0.0)
+        self.dps = metric_ratio(self.dps, self.dividends, self.shares_outstanding)
+
+       
+    def refresh_CFS(self, npp, hist):
+        self.capex = prime_mover(self.capex, m.ceil(hist), 0.0)
+        self.fcf = summary_line(self.fcf, self.net_income, self.depreciation, (-1)*self.capex, (-1)*self.delta_wc)
+        self.shares_outstanding = prime_mover(self.shares_outstanding, m.ceil(npp.duration), 0.0)
+        self.dps = metric_ratio(self.dps, self.dividends, self.shares_outstanding)      
 

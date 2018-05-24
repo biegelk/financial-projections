@@ -6,12 +6,22 @@ import random as rand
 class Project:
     """ Project class contains plant attributes and project outcomes """
 
-    def __init__(self, rand_delay):
+    def __init__(self):
+        # Behavioral booleans
+        self.rand_esc = rand_esc
+        self.rand_delay = rand_delay
+        self.cap_interest = cap_interest
+
         # Construction outcomes
         self.initial_cost = total_cost
-        self.total_cost = self.initial_cost
+        # Escalate if rand_esc is enabled
+        if self.rand_esc:
+            self.total_cost = self.initial_cost * (1 + rand.random())
+        else:
+            self.total_cost = self.initial_cost
+        # Delay if rand_delay is enabled
         if rand_delay:
-            self.duration = init_schedule * (1+rand.random())
+            self.duration = init_schedule * (1 + rand.random())
         else:
             self.duration = init_schedule
         self.inc_spend = np.zeros(m.ceil(self.duration))
@@ -32,7 +42,7 @@ class Project:
         self.om_npv = 0
 
 
-    def spend_profile(self, cap_interest):
+    def spend_profile(self):
         # Set incremental spend
         for i in range(m.floor(self.duration)):
             self.inc_spend[i] = self.total_cost*(-1/2)*(m.cos(m.pi*(i+1)/self.duration) - m.cos(m.pi*i/self.duration))
@@ -49,19 +59,14 @@ class Project:
         for i in range(1,m.ceil(self.duration)):
             self.idc[i] = (self.cum_spend[i]+self.cum_spend[i-1])/2 * mcd
             # If we're capitalizing interest, add IDC to each year's project spend
-            self.cum_spend[i] += self.idc[i] if cap_interest else self.cum_spend[i]
+            self.cum_spend[i] += self.idc[i] if self.cap_interest else self.cum_spend[i]
 
         # Update total final project cost
         self.total_cost = self.cum_spend[-1]
 
-        print("duration = ", self.duration)
-        print("total cost = ", self.total_cost)
 
-
-
-
-    def build_plant(self, cap_interest):
-        self.spend_profile(cap_interest)
+    def build_plant(self):
+        self.spend_profile()
         self.annual_capital_payment = self.total_cost * mcd / (1 - (1+mcd)**(-term))
 
 

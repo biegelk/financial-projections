@@ -1,7 +1,6 @@
-# A pro forma financial statement generator for a utility building
-#     a nuclear power plant.
+# A pro forma financial statement generator for a utility building a nuclear power plant.
 # Author: Katie Biegel
-# Last revision: 2018-05-16
+# Last revision: 2018-05-23
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,10 +18,13 @@ from utility import *
 # Currently available options: "so" and "scg"
 ut = Utility("so", time_horizon, hist)
 ut.initialize_IS()
+ut.initialize_CFS()
 
 # Simulate plant construction project and return spend profiles
-npp = Project(rand_delay)
-npp.build_plant(cap_interest)
+npp = Project()
+npp.build_plant()
+
+print(npp.duration)
 
 # Compute project LCOE
 npp.get_lcoe()
@@ -32,8 +34,9 @@ print("LCOE = ",npp.lcoe,"c/kWh")
 npp.get_npv()
 print("NPV = $", npp.npv,"M")
 
-ut.finance_project(npp)
+ut.incorporate_project(npp)
 
 ut.refresh_IS(hist)
+ut.refresh_CFS(npp, npp.duration)
 
-ut.write_IS_csv()
+ut.write_csv()
