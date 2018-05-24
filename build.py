@@ -14,19 +14,23 @@ class Project:
 
         # Construction outcomes
         self.initial_cost = total_cost
+        self.init_schedule = init_schedule
+        # Default values in case probabilistic execution is turned off
+        self.total_cost = self.initial_cost
+        self.duration = init_schedule
+
         # Escalate if rand_esc is enabled
         if self.rand_esc:
             self.total_cost = self.initial_cost * (1 + rand.random())
         else:
             self.total_cost = self.initial_cost
         # Delay if rand_delay is enabled
-        if rand_delay:
-            self.duration = init_schedule * (1 + rand.random())
-        else:
-            self.duration = init_schedule
-        self.inc_spend = np.zeros(m.ceil(self.duration))
-        self.cum_spend = np.zeros(m.ceil(self.duration))
-        self.idc = np.zeros(m.ceil(self.duration))
+#        if rand_delay:
+#            self.duration = init_schedule * (1 + rand.random())
+#        else:
+#            self.duration = init_schedule
+        self.stage_durations = np.ones(self.init_schedule) * float(self.init_schedule) / 5.
+        self.stage_escalation = [1, 1, 1, 1, 1] # placeholder values to enforce cap on np.random.gamma values
         self.annual_capital_payment = 0.0
         self.capital_npv = 0
         self.npv = 0
@@ -43,7 +47,10 @@ class Project:
 
 
     def spend_profile(self):
+        self.inc_spend = np.zeros(m.ceil(self.duration))
+        self.cum_spend = np.zeros(m.ceil(self.duration))
         # Set incremental spend
+        self.idc = np.zeros(m.ceil(self.duration))
         for i in range(m.floor(self.duration)):
             self.inc_spend[i] = self.total_cost*(-1/2)*(m.cos(m.pi*(i+1)/self.duration) - m.cos(m.pi*i/self.duration))
         self.inc_spend[-1] = self.total_cost - np.sum(self.inc_spend[:-1])
@@ -63,6 +70,17 @@ class Project:
 
         # Update total final project cost
         self.total_cost = self.cum_spend[-1]
+
+
+    def delay_project(self):
+        if rand_delay:
+            self.stage_escalation[4] = rand.random()
+            self.stage_durations[4] = self.stage_durations[4] * (1 + self.stage_escalation[4])
+            for i in range(4):
+                while self.stage_escalation[i] >= 0.8: # max permitted delay: 2.011*init_schedule
+                    self.stage_escalation[i] = np.random.gamma(sgamma_params[i][0], sgamma_params[i][1])# - sgamma_fix[i]
+                self.stage_durations[i] = self.stage_durations[i] * (1 + self.stage_escalation[i])
+            self.duration = np.sum(self.stage_durations)
 
 
     def build_plant(self):

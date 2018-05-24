@@ -66,7 +66,7 @@ class Utility:
         elif name == "scg":
             isfile = "./profiles/income-statement-scg.csv"
         else:
-            print("Utility IS not available")
+            ("Utility IS not available")
             exit()
         with open(isfile, 'r') as df:
             is_data = csv.reader(df, delimiter = ',', quotechar = '\"')

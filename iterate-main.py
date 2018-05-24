@@ -27,9 +27,11 @@ for i in range(num_iterations):
     # Currently available options: "so" and "scg"
     ut = Utility("so", time_horizon, hist)
     ut.initialize_IS()
+    ut.initialize_CFS()
 
     # Simulate plant construction project and return spend profiles
     npp = Project()
+    npp.delay_project()
     npp.build_plant()
 
     # Compute project LCOE
@@ -38,9 +40,10 @@ for i in range(num_iterations):
     # Compute project NPV
     npp.get_npv()
 
-    ut.finance_project(npp)
+    ut.incorporate_project(npp)
 
     ut.refresh_IS(hist)
+    ut.refresh_CFS(npp, npp.duration)
 
     # Track outcomes
     costs[i] = npp.total_cost

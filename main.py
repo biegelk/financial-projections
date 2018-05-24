@@ -22,6 +22,7 @@ ut.initialize_CFS()
 
 # Simulate plant construction project and return spend profiles
 npp = Project()
+npp.delay_project()
 npp.build_plant()
 
 print(npp.duration)
