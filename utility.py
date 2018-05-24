@@ -204,7 +204,7 @@ class Utility:
         self.delta_wc -= 2400
 
         # Straight-line depreciation once project is complete
-        for i in range(m.ceil(npp.duration),time_horizon+hist):
+        for i in range(int(m.ceil(npp.duration)),time_horizon+hist):
             self.depreciation[i:] += npp.total_cost / econ_life
 
         # Account for project-related debt
