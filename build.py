@@ -74,11 +74,11 @@ class Project:
 
     def delay_project(self):
         if rand_delay:
-            self.stage_escalation[4] = rand.random()
+            self.stage_escalation[4] = 0.15
             self.stage_durations[4] = self.stage_durations[4] * (1 + self.stage_escalation[4])
             for i in range(4):
                 while self.stage_escalation[i] >= 0.8: # max permitted delay: 2.011*init_schedule
-                    self.stage_escalation[i] = np.random.gamma(sgamma_params[i][0], sgamma_params[i][1])# - sgamma_fix[i]
+                    self.stage_escalation[i] = np.random.gamma(sgamma_params[i][0], sgamma_params[i][1])
                 self.stage_durations[i] = self.stage_durations[i] * (1 + self.stage_escalation[i])
             self.duration = np.sum(self.stage_durations)
 
