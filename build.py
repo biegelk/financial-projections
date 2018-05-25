@@ -19,11 +19,6 @@ class Project:
         self.total_cost = self.initial_cost
         self.duration = init_schedule
 
-        # Escalate if rand_esc is enabled
-        if self.rand_esc:
-            self.total_cost = self.initial_cost * (1 + rand.random())
-        else:
-            self.total_cost = self.initial_cost
         self.stage_durations = np.ones(self.init_schedule) * float(self.init_schedule) / 5.
         self.stage_escalation = 3*np.ones(5) # placeholder values to enforce cap on np.random.gamma values
         self.annual_capital_payment = 0.0
