@@ -1,0 +1,125 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{booktabs}
+
+\begin{document}
+
+\section{Project Expenditure Profile}
+
+\subsection{Fundamental Expenditure Behavior}
+
+The underlying distribution of expenditures (independent of cost escalation and schedule delay), $I_0(t)$, is assumed to be a sinusoid:
+
+\begin{equation}
+  I_0(t,d) = K \frac{\pi}{2d} \, \sin\left( \frac{\pi t}{d} \right),
+\end{equation}
+
+where $d$ is the total duration of the project (in years) and $K$ is the initial estimate of the total final project cost.
+
+For $d$ held constant, the cumulative expenditures on the project at time $t$, $E_0(t)$, is the integral of the incremental spend function:
+
+\begin{equation} \label{e0-def}
+  \begin{split}
+    E_0(t) & = \int_0^t {I_0(t') \, \mathrm{d}t'} \\
+      & = - \frac{K}{2} \left[ \cos \left( \frac{\pi t}{d} \right) - 1 \right]
+  \end{split}
+\end{equation}
+
+These functions have the feature that evaluating $E_0$ at the end of the project (time $t$ equal to $d$, the project duration) reproduces the total project cost:
+
+\begin{equation}
+  E_0(d) = K.
+\end{equation}
+
+
+\subsection{Schedule Slip}
+For eq. \eqref{e0-def} to be valid, $d$ must be computed ahead of time and not changed during the course of the project.
+(On-the-fly schedule slip will be implemented in future versions.) \\
+
+Historically, schedule slip typically occurred continuously throughout all stages of projects, with the effects being most severe towards the end of each project.
+DOE/EIA-0485 provides data for cost and schedule escalation for nuclear project in the US up to 1986. 
+For each project, expected completion dates are provided at each of six milestones: Project start, 25\% completion, 50\% completion, 75\% completion, 90\% completion, and 100\% completion. \\
+
+Using this data, probability distributions were developed for the schedule slip factors during each phase (0-25\% completion, 25-50\% completion, and so on).
+Various probability distributions were examined against the data; the gamma distribution produced the closest match.
+Data for each completion stage were fitted to gamma distributions $S_i$ with the following parameters:
+
+%\begin{table}[!htbp]
+\begin{center}
+$\mathrm{S_i} \sim \Gamma \left( \alpha_i, \beta_i \right)$\\
+\begin{tabular} {| c | c | c |} \hline
+%  \multicolumn{5}{c}{$\mathrm{X} \sim \Gamma \left( \alpha, \beta \right)$} \\
+  Project Stage & $\alpha_i$ & $\beta_i$ \\ \hline
+  0-25\% & 2.422 & 0.419 \\ \hline
+  25-50\% & 4.219 & 0.166 \\ \hline
+  50-75\% & 7.923 & 0.018 \\ \hline
+  75-90\% & 3.555 & 0.227 \\ \hline
+  90-100\% & 8.758 & 0.026 \\ \hline
+\end{tabular}
+\end{center}
+%\end{table}
+
+Each project has a statically-defined initial schedule estimate, $d_0$, pulled from the reactor project profile.
+This duration is divided among five project stages of equal length.
+Each stage's duration $d_i$ is then escalated by a factor generated from the appropriate probability distribution.
+
+\begin{equation}
+  d_i = \frac{\Gamma \left( \alpha_i, \beta_i \right) \, d_0}{5}
+\end{equation}
+
+The total project duration $d$ is the total of the durations of all stages:
+
+\begin{equation}
+  d = \sum_{i=1}^5 d_i
+\end{equation}
+
+\subsection{Cost Escalation}
+
+For most historical projects, cost escalation occurred in all stages of the project and became more severe over time.
+The new incremental and cumulative expenditure functions are named $I_e(t)$ and $E_e(t)$, respectively.
+The behavior of these functions is predicated on an escalated total final project cost at time $d$:
+
+\begin{equation}
+  E_e(d) = \epsilon \, E_0(d)
+\end{equation}
+
+The final total escalation factor, $\epsilon$, is calculated by:
+
+\begin{equation*}
+  \epsilon = \Gamma \left( \alpha, \beta \right),
+\end{equation*}
+
+where $\Gamma$ is the gamma distribution, $\alpha$ is the shape parameter, and $\beta$ is the rate parameter. At present, values of $\alpha = 1.2$ and $\beta = 0.6$ are being used.\\
+
+This model escalates the fundamental expenditure profile $I_0(t)$ with an exponential escalator term, $e^{\alpha t}$.
+An appropriate exponential growth rate $\alpha$ must be determined, in order to reproduce the desired value of $E_e(d)$:
+
+\begin{equation}
+  \int_0^d \! {I_0(t) \, e^{\alpha t} \, \mathrm{d}t} = E_0(d) \, \left( 1 + \epsilon \right)
+\end{equation}
+
+Evaluating the integral and some algebraic manipulation produce the analytically unsolvable expression:
+
+\begin{equation} \label{non-an}
+  e^{\alpha d} - \frac{2 (1 + \epsilon) {\alpha}^2 d^2}{\pi^2} = 2 (1 + \epsilon) - 1
+\end{equation}
+
+However, inputting some likely values for the parameters $\alpha$, $\epsilon$, and $d$ demonstrates that the second term is negligible over value ranges of interest.
+
+\begin{center}
+\begin{tabular}{| c | c | c | c | c | c |}
+  \hline
+  $\alpha$ & $\epsilon$ & d & $e^{\alpha d}$ & $\frac{2 (1 + \epsilon) {\alpha}^2 d^2}{\pi^2}$& $2(1 + \epsilon) - 1$  \\ \hline
+  0.01 & 0.1 & 10 & 1.001 & 0.00223 & 1.2 \\ \hline
+  0.03 & 0.5 & 12 & 1.43 & 0.039 & 2.0 \\ \hline 
+\end{tabular}
+\end{center}
+
+Thus, $e^{\alpha d} \gg \frac{2 (1 + \epsilon) {\alpha}^2 d^2}{\pi^2}$ and $2(1 + \epsilon) - 1 \gg \frac{2 (1 + \epsilon) {\alpha}^2 d^2}{\pi^2}$, and the second term is neglected. Equation \eqref{non-an} therefore reduces to:
+
+\begin{equation}
+  \alpha = \frac{1}{d} \ln \left(1 + 2 \epsilon \right)
+\end{equation}
+
+\end{document}
