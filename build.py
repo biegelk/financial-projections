@@ -30,7 +30,8 @@ class Project:
         self.capital_npv = 0
         self.npv = 0
         self.delay_limits = [2, 2, 2, 2, 2]
-
+        self.alpha = 0
+        self.epsilon = 2
 
         # Operational outcomes
         self.annual_generation = capacity * cf * 8766.0 # kWh/yr
@@ -43,53 +44,80 @@ class Project:
         self.om_npv = 0
 
 
-    def spend_profile(self):
-        self.inc_spend = np.zeros(m.ceil(self.duration))
-        self.cum_spend = np.zeros(m.ceil(self.duration))
-        # Set incremental spend
-        self.idc = np.zeros(m.ceil(self.duration))
-        for i in range(int(m.floor(self.duration))):
-            self.inc_spend[i] = self.total_cost*(-1/2)*(m.cos(m.pi*(i+1)/self.duration) - m.cos(m.pi*i/self.duration))
-        self.inc_spend[-1] = self.total_cost - np.sum(self.inc_spend[:-1])
+    def incremental_spend(self, T1, T2):
+        return self.total_cost*m.pi/2 * (m.exp(self.alpha*T2)*(self.alpha*self.duration*m.sin(m.pi*T2/self.duration)-m.pi*m.cos(m.pi*T2/self.duration))/(self.alpha**2*self.duration**2 + m.pi**2) - m.exp(self.alpha*T1)*(self.alpha*self.duration*m.sin(m.pi*T1/self.duration) - m.pi*m.cos(m.pi*T1/self.duration))/(self.alpha**2*self.duration**2+m.pi**2))
+        
 
-        # Tally cumulative spend
-        for i in range(int(m.ceil(self.duration))):
-            for j in range(int(m.ceil(self.duration))):
-                if j >= i:
-                    self.cum_spend[j] += self.inc_spend[i]
-
-        # If capitalizing interest, add IDC to year 0's project spend
-        self.idc[0] = self.cum_spend[0]/2 * mcd
-        for i in range(1,int(m.ceil(self.duration))):
-            self.idc[i] = (self.cum_spend[i]+self.cum_spend[i-1])/2 * mcd
-        if cap_interest: 
-            self.inc_spend[0] += self.cum_spend[0]/2 * mcd if cap_interest else self.inc_spend[0]
-            self.cum_spend[0] += self.cum_spend[0]/2 * mcd if cap_interest else self.cum_spend[0]
-            for i in range(1,int(m.ceil(self.duration))):
-                self.cum_spend[i] += self.idc[i] if self.cap_interest else self.cum_spend[i]
-                self.inc_spend += self.idc[i] - self.idc[i-1]
-
-        # Update total final project cost
-        self.total_cost = self.cum_spend[-1]
-
-
-    def delay_project(self):
+    def delay_schedule(self):
         if rand_delay:
             for i in range(5):
-                while self.stage_escalation[i] >= self.delay_limits[i]: # cap permissible delay values
-                    self.stage_escalation[i] = np.random.gamma(sgamma_params[i][0], sgamma_params[i][1])
-#                self.stage_escalation[i] = np.random.gamma(sgamma_params[i][0], sgamma_params[i][1])
+                while self.stage_escalation[i] >= 2: # cap permissible delay values
+                    self.stage_escalation[i] = 1/300 * np.random.gamma(sgamma_params[i][0], sgamma_params[i][1])
                 self.stage_durations[i] = self.stage_durations[i] * (1 + self.stage_escalation[i])
             self.duration = np.sum(self.stage_durations)
 
 
-    def escalate_project(self):
-        if rand_delay:
-            pass
+    def escalate_cost(self):
+        while self.epsilon >= 2:
+            self.epsilon = np.random.gamma(1.2, 0.6)
+        self.alpha = 1/self.duration * m.log(1 + 2*self.epsilon)
+
+
+    def spend_profile(self):
+        # Initialize spend vectors with appropriate lengths
+        self.inc_spend = np.zeros(int(m.ceil(self.duration)))
+        self.cum_spend = np.zeros(int(m.ceil(self.duration)))
+        self.inc_idc = np.zeros(int(m.ceil(self.duration)))
+        self.cum_idc = np.zeros(int(m.ceil(self.duration)))
+        self.total_cum_spend = np.zeros(int(m.ceil(self.duration)))
+
+        # Track and capitalize interest
+        for i in range(int(m.ceil(self.duration))-1):
+            self.inc_spend[i] = self.incremental_spend(i,i+1)
+            self.cum_spend[i:] += self.inc_spend[i]
+            self.inc_idc[i] = (self.cum_spend[i] + self.cum_idc[i]) * mcd
+            self.cum_idc[i:] += self.inc_idc[i]
+        self.inc_spend[-1] = self.incremental_spend(m.floor(self.duration), self.duration)
+        self.cum_spend[-1] += self.inc_spend[-1]
+        self.inc_idc[-1] = (self.cum_spend[-1] + self.cum_idc[i]) * mcd
+        self.cum_idc[-1] += self.inc_idc[-1]
+
+        # Update total final project cost
+        self.total_cost = self.cum_spend[-1] + self.cum_idc[-1]
+
+
+#    def spend_profile(self):
+#        self.inc_spend = np.zeros(m.ceil(self.duration))
+#        self.cum_spend = np.zeros(m.ceil(self.duration))
+#        # Set incremental spend
+#        self.idc = np.zeros(m.ceil(self.duration))
+#        for i in range(int(m.floor(self.duration))):
+#            self.inc_spend[i] = self.total_cost*(-1/2)*(m.cos(m.pi*(i+1)/self.duration) - m.cos(m.pi*i/self.duration))
+#        self.inc_spend[-1] = self.total_cost - np.sum(self.inc_spend[:-1])
+
+#        # Tally cumulative spend
+#        for i in range(int(m.ceil(self.duration))):
+#            for j in range(int(m.ceil(self.duration))):
+#                if j >= i:
+#                    self.cum_spend[j] += self.inc_spend[i]
+
+#        # If capitalizing interest, add IDC to year 0's project spend
+#        self.idc[0] = self.cum_spend[0]/2 * mcd
+#        if cap_interest: 
+#            self.inc_spend[0] += self.cum_spend[0]/2 * mcd if cap_interest else self.inc_spend[0]
+#            self.cum_spend[0] += self.cum_spend[0]/2 * mcd if cap_interest else self.cum_spend[0]
+#            for i in range(1,int(m.ceil(self.duration))):
+#                self.idc[i] = self.cum_spend[i-1] * mcd
+#                self.cum_spend[i] += self.idc[i] if self.cap_interest else self.cum_spend[i]
+#                self.inc_spend += self.idc[i] - self.idc[i-1]
+
+#        # Update total final project cost
+#        self.total_cost = self.cum_spend[-1]
 
 
     def build_plant(self):
-        self.delay_project()
+        self.delay_schedule()
+        self.escalate_cost()
         self.spend_profile()
         self.annual_capital_payment = self.total_cost * mcd / (1 - (1+mcd)**(-term))
 

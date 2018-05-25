@@ -56,7 +56,7 @@ class Utility:
 
 
         # Capital Structure
-        self.debt_fraction = 0.5
+        self.debt_fraction = 1.0
         self.equity_fraction = 1 - self.debt_fraction
 
 

@@ -11,6 +11,7 @@ cap_interest = 1 # Capitalize interest during construction?
 # Firm financial constants
 tax_rate = 0.335
 wacd = 0.05 # historical weighted average cost of debt
+rroe = 0.12 # required return on equity
 mcd = 0.07  # marginal cost of debt for a nuclear project
 min_dps = 2.3
 
@@ -19,7 +20,7 @@ total_cost = 6000 # $M, cost estimate at 0% completion
 init_schedule = 5 # construction schedule, years
 capacity = 2200000 # kW
 cf = 0.9 # capacity factor
-d = (9.25+4.)/2./100. # wacc/discount rate
+d = (rroe + wacd)/2. # wacc/discount rate
 term = 30 # years
 power_price = 0.06 # $/kWh
 life = 40 # years
@@ -35,7 +36,7 @@ cgamma_fix = [0, .73, 1.54, 0.90, 0]
 sched_esc = [[0.063, 0.189, 0.379], [0.048, 0.116, 0.217], [0.049, 0.099, 00.174], [0.038, 0.066, 0.108], [0.048, 0.117, 0.220]]
 #sgamma_params = [[2.422, 1/2.387], [4.219, 1/6.031], [21.900, 1/54.084], [3.555, 1/4.405], [49.758, 1/38.479]]
 #sgamma_params = [[2.422, .4], [4.219, .15], [4.00, .02], [3.555, .2], [4.758, .03]]
-sgamma_params = [[1, .5], [1,.5], [1,.5], [1,.5], [1,.5]]
+sgamma_params = [[5, 10], [5,10], [5,10], [5,10], [5,10]]
 sgamma_fix = [1.732, 1.06, .72, .356, 1.131]
 
 # Growth rates

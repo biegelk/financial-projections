@@ -15,13 +15,14 @@ from build import *
 from constants import *
 from utility import *
 
-num_iterations = 10000
+num_iterations = 100000
 make_plots = 1
 
 npvs = np.zeros(num_iterations)
 lcoes = np.zeros(num_iterations)
 costs = np.zeros(num_iterations)
 durations = np.zeros(num_iterations)
+acps = np.zeros(num_iterations)
 
 is_cash_shortage = np.zeros(num_iterations)
 cash_shortage = np.zeros((num_iterations, time_horizon+hist))
@@ -41,7 +42,8 @@ for i in range(num_iterations):
     # Compute project LCOE
     npp.get_lcoe()
     if i == 495:
-        print(npp.idc)
+        print(npp.inc_idc)
+        print(npp.inc_spend)
         print(npp.cum_spend)
         print("annual capital payment = $", npp.annual_capital_payment)
 
@@ -58,6 +60,7 @@ for i in range(num_iterations):
     durations[i] = npp.duration
     npvs[i] = npp.npv
     lcoes[i] = npp.lcoe
+    acps[i] = npp.annual_capital_payment
 
     if i == 495:
         ut.write_csv()
@@ -74,8 +77,9 @@ for j in range(num_iterations):
 print("average cost = ", np.mean(costs))
 print("average duration = ", np.mean(durations))
 print("stdev duration = ", np.std(durations))
-print("average npv = ", np.mean(npvs))
-print("average lcoe = ", np.mean(lcoes))
+print("average annual capital payment =", np.mean(acps))
+#print("average npv = ", np.mean(npvs))
+#print("average lcoe = ", np.mean(lcoes))
 print("Average cash shortage years within forecast period = ", np.sum(is_cash_shortage) / num_iterations)
 print("Std. dev cash shortage years w/in forecast period = ", np.std(is_cash_shortage))
 print("Proportion of cases with no cash shortage = ", float(no_problem) / float(num_iterations))
@@ -110,17 +114,24 @@ if make_plots:
     plt.show()
 
     # LCOE histogram
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.set(xlabel = 'LCOE (cents/kWh)', title = 'Levelized Cost of Electricity Outcomes')
-    plt.hist(lcoes, 40)
-    plt.show()
+#    fig = plt.figure()
+#    ax = fig.add_subplot(111)
+#    ax.set(xlabel = 'LCOE (cents/kWh)', title = 'Levelized Cost of Electricity Outcomes')
+#    plt.hist(lcoes, 40)
+#    plt.show()
 
     # NPV histogram
+#    fig = plt.figure()
+#    ax = fig.add_subplot(111)
+#    ax.set(xlabel = 'NPV ($M)', title = 'Net Present Value Outcomes')
+#    plt.hist(npvs, 40)
+#    plt.show()
+
+    # Annual capital payment histogram
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.set(xlabel = 'NPV ($M)', title = 'Net Present Value Outcomes')
-    plt.hist(npvs, 40)
+    ax.set(xlabel = 'Annual capital payment ($M)', title = 'Annual Capital Payment')
+    plt.hist(acps, 40)
     plt.show()
 
     # Cash shortage histogram
