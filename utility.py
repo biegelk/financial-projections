@@ -45,14 +45,12 @@ class Utility:
 
 
         ## CASH FLOW STATEMENT
-        self.dividends = np.zeros(time_horizon+hist)
+        self.dividends_paid = np.zeros(time_horizon+hist)
         self.baseline_delta_wc = np.zeros(time_horizon+hist)
         self.delta_wc = np.zeros(time_horizon+hist)
         self.fcf = np.zeros(time_horizon+hist)
         self.shares_outstanding = np.zeros(time_horizon+hist)
         self.dps = np.zeros(time_horizon+hist)
-
-
 
 
         # Capital Structure
@@ -65,36 +63,40 @@ class Utility:
             isfile = "./profiles/income-statement-so.csv"
         elif name == "scg":
             isfile = "./profiles/income-statement-scg.csv"
+        elif name == "check":
+            isfile = "./profiles/omnibus-checkfile-static.csv"
         else:
             ("Utility IS not available")
             exit()
         with open(isfile, 'r') as df:
             is_data = csv.reader(df, delimiter = ',', quotechar = '\"')
             for row in is_data:
-                self.revenues[0:hist]        = row[1:] if row[0] == 'TotalOperatingRevenues' else self.revenues[0:hist]
-                self.fuel[0:hist]            = row[1:] if row[0] == 'Fuel'                   else self.fuel[0:hist]
-                self.purchased_power[0:hist] = row[1:] if row[0] == 'PurchasedPower'         else self.purchased_power[0:hist]
-                self.misc_om[0:hist]         = row[1:] if row[0] == 'OtherOM'                else self.misc_om[0:hist]
-                self.depreciation[0:hist]    = row[1:] if row[0] == 'DepAmort'               else self.depreciation[0:hist]
-                self.misc_taxes[0:hist]      = row[1:] if row[0] == 'NonIncomeTaxes'         else self.misc_taxes[0:hist]
-                self.afudc[0:hist]           = row[1:] if row[0] == 'AFUDC'                  else self.afudc[0:hist]
-                self.baseline_interest[0:hist] = row[1:] if row[0] == 'InterestExpense'      else self.baseline_interest[0:hist]
-                self.income_tax[0:hist]      = row[1:] if row[0] == 'IncomeTaxes'            else self.income_tax[0:hist]
-                self.baseline_debt[0:hist]   = row[1:] if row[0] == 'LTD'                    else self.baseline_debt[0:hist]
-                self.ppe[0:hist]             = row[1:] if row[0] == 'TotalPPE'               else self.ppe[0:hist]
-                self.capex[0:hist]           = row[1:] if row[0] == 'CapEx'                  else self.capex[0:hist]
-                self.delta_wc[0:hist]        = row[1:] if row[0] == 'DeltaWC'                else self.delta_wc[0:hist]
+                self.revenues[0:hist]        = row[1:hist+1] if row[0] == 'TotalOperatingRevenues' else self.revenues[0:hist]
+                self.fuel[0:hist]            = row[1:hist+1] if row[0] == 'Fuel'                   else self.fuel[0:hist]
+                self.purchased_power[0:hist] = row[1:hist+1] if row[0] == 'PurchasedPower'         else self.purchased_power[0:hist]
+                self.misc_om[0:hist]         = row[1:hist+1] if row[0] == 'OtherOM'                else self.misc_om[0:hist]
+                self.depreciation[0:hist]    = row[1:hist+1] if row[0] == 'DepAmort'               else self.depreciation[0:hist]
+                self.misc_taxes[0:hist]      = row[1:hist+1] if row[0] == 'NonIncomeTaxes'         else self.misc_taxes[0:hist]
+                self.afudc[0:hist]           = row[1:hist+1] if row[0] == 'AFUDC'                  else self.afudc[0:hist]
+                self.baseline_interest[0:hist] = row[1:hist+1] if row[0] == 'InterestExpense'      else self.baseline_interest[0:hist]
+                self.income_tax[0:hist]      = row[1:hist+1] if row[0] == 'IncomeTaxes'            else self.income_tax[0:hist]
+                self.baseline_debt[0:hist]   = row[1:hist+1] if row[0] == 'LTD'                    else self.baseline_debt[0:hist]
+                self.ppe[0:hist]             = row[1:hist+1] if row[0] == 'TotalPPE'               else self.ppe[0:hist]
+                self.capex[0:hist]           = row[1:hist+1] if row[0] == 'CapEx'                  else self.capex[0:hist]
+                self.delta_wc[0:hist]        = row[1:hist+1] if row[0] == 'DeltaWC'                else self.delta_wc[0:hist]
         if name == "so":
             cfsfile = "./profiles/cash-flow-statement-so.csv"
+        elif name == "check":
+            cfsfile = "./profiles/omnibus-checkfile-static.csv"
         else:
             print("Utility CFS not available")
         with open(cfsfile, 'r') as df:
             cfs_data = csv.reader(df, delimiter = ',', quotechar = '\"')
             for row in cfs_data:
-                self.dividends[0:hist] = row[1:] if row[0] == 'Dividends' else self.dividends[0:hist]
-                self.shares_outstanding[0:hist] = row[1:] if row[0] == 'SharesOutstanding' else self.shares_outstanding[0:hist]
-                self.capex[0:hist] = row[1:] if row[0] == 'CapEx' else self.capex[0:hist]
-                self.delta_wc[0:hist] = row[1:] if row[0] == 'DeltaWC' else self.delta_wc[0:hist]
+                self.dividends_paid[0:hist] = row[1:hist+1] if row[0] == 'DividendsPaid' else self.dividends_paid[0:hist]
+                self.shares_outstanding[0:hist] = row[1:hist+1] if row[0] == 'SharesOutstanding' else self.shares_outstanding[0:hist]
+                self.capex[0:hist] = row[1:hist+1] if row[0] == 'CapEx' else self.capex[0:hist]
+                self.delta_wc[0:hist] = row[1:hist+1] if row[0] == 'DeltaWC' else self.delta_wc[0:hist]
 
 
 
@@ -141,6 +143,8 @@ class Utility:
 
     def refresh_IS(self, hist):
         self.total_debt = summary_line(self.total_debt, self.baseline_debt, self.npp_debt)
+        self.fuel = secondary_mover(self.fuel, self.revenues, hist, fuel_ratio)
+        self.purchased_power = secondary_mover(self.purchased_power, self.revenues, hist, pp_ratio)
         self.misc_om = secondary_mover(self.misc_om, self.revenues, hist, misc_om_ratio)
         self.misc_taxes = secondary_mover(self.misc_taxes, self.ebitda, hist, misc_taxes_ratio)
         self.op_expenses = summary_line(self.op_expenses, self.fuel, self.purchased_power, self.misc_om)
@@ -187,7 +191,7 @@ class Utility:
             writer.writerow(np.concatenate((['Delta Working Capital'], self.delta_wc)))
             writer.writerow(np.concatenate((['CapEx'], self.capex)))
             writer.writerow(np.concatenate((['Free Cash Flow'], self.fcf)))
-            writer.writerow(np.concatenate((['Dividends Paid'], self.dividends)))
+            writer.writerow(np.concatenate((['Dividends Paid'], self.dividends_paid)))
             writer.writerow(np.concatenate((['Shares Outstanding'], self.shares_outstanding)))
             writer.writerow(np.concatenate((['Dividend Yield'], self.dps)))
 
@@ -219,7 +223,7 @@ class Utility:
 
     def initialize_CFS(self):
         # Dividends
-        self.dividends = prime_mover(self.dividends, hist, dps_growth)
+        self.dividends_paid = secondary_mover(self.dividends_paid, self.net_income, hist, payout_ratio)
 
         # Capital Expenditures
         self.capex = prime_mover(self.capex, hist, ppe_growth)
@@ -233,12 +237,13 @@ class Utility:
 
         # Shares outstanding
         self.shares_outstanding = prime_mover(self.shares_outstanding, hist, 0.0)
-        self.dps = metric_ratio(self.dps, self.dividends, self.shares_outstanding)
+        self.dps = metric_ratio(self.dps, self.dividends_paid, self.shares_outstanding)
 
        
     def refresh_CFS(self, npp, hist):
         self.capex = prime_mover(self.capex, m.ceil(hist), 0.0)
         self.fcf = summary_line(self.fcf, self.net_income, self.depreciation, (-1)*self.capex, (-1)*self.delta_wc)
         self.shares_outstanding = prime_mover(self.shares_outstanding, m.ceil(npp.duration), 0.0)
-        self.dps = metric_ratio(self.dps, self.dividends, self.shares_outstanding)      
+        self.dividends_paid = secondary_mover(self.dividends_paid, self.net_income, hist, payout_ratio)
+        self.dps = metric_ratio(self.dps, self.dividends_paid, self.shares_outstanding)      
 

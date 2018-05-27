@@ -41,13 +41,11 @@ sgamma_fix = [1.732, 1.06, .72, .356, 1.131]
 
 # Growth rates
 rev_growth  = 0.016  # % change YOY
-fuel_growth = 0.252  # % of revenues
-pp_growth   = 0.042  # % of revenues
 ppe_growth  = 0.03   # % change YOY
-dps_growth  = 0.03   # % change YOY
 
 # Secondary ratios
 misc_om_ratio = 0.256  # to revenues
 fuel_ratio    = 0.252  # to revenues
 pp_ratio      = 0.042  # to revenues
 misc_taxes_ratio = 0.128 # to EBITDA
+payout_ratio = 0.5 # Payout ratio
