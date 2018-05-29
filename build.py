@@ -27,6 +27,8 @@ class Project:
         self.delay_limits = [2, 2, 2, 2, 2]
         self.alpha = 0
         self.epsilon = 2
+        self.a = 0.0
+        self.b = 0.0
 
         # Operational outcomes
         self.annual_generation = capacity * cf * 8766.0 # kWh/yr
@@ -52,10 +54,19 @@ class Project:
             self.duration = np.sum(self.stage_durations)
 
 
-    def escalate_cost(self):
-        while self.epsilon >= 2:
+    def calculate_alpha(self):
+        self.alpha = (-1 + m.sqrt(1+(4-16/m.pi)*self.epsilon + (16/m.pi**2)*self.epsilon**2)) / (2*self.duration * (0.5 - 2*(1+self.epsilon)/m.pi**2))
+
+    def calculate_epsilon(self):
+        while self.epsilon >= 1.4:
             self.epsilon = np.random.gamma(1.2, 0.6)
-        self.alpha = 1/self.duration * m.log(1 + 2*self.epsilon)
+
+
+    def escalate_cost(self):
+        self.calculate_epsilon()
+#        self.alpha = 1/self.duration * m.log(1 + 2*self.epsilon)
+        self.calculate_alpha()
+        print("alpha =", self.alpha)
 
 
     def spend_profile(self):

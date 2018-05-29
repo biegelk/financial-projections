@@ -183,3 +183,45 @@ def test_initialize_CFS_DPS():
     assert round(ut.dps[-1], 2) == 1.36
 
 
+## TEST PROJECT BUILD FUNCTIONS
+
+def test_incremental_spend_total_no_esc_no_delay():
+    npp = Project()
+    assert npp.incremental_spend(0, npp.duration) == 6000
+
+def test_incremental_spend_half_no_esc_no_delay():
+    npp = Project()
+    assert npp.incremental_spend(0, 0.5*npp.duration) == 3000
+
+def test_incremental_spend_total_no_esc_w_delay():
+    npp = Project()
+    npp.delay_schedule()
+    assert npp.incremental_spend(0, npp.duration) == 6000
+
+def test_incremental_spend_half_no_esc_w_delay():
+    npp = Project()
+    npp.delay_schedule()
+    assert npp.incremental_spend(0, 0.5*npp.duration) == 3000
+
+def test_incremental_spend_total_w_esc_w_delay():
+    for i in range(10):
+        npp = Project()
+        npp.delay_schedule()
+        npp.escalate_cost()
+        assert npp.incremental_spend(0, npp.duration) >= 0.9*6000*(1+npp.epsilon)
+        assert npp.incremental_spend(0, npp.duration) <= 1.1*6000*(1+npp.epsilon)
+
+
+def test_calculate_alpha_07_7():
+    npp = Project()
+    npp.epsilon = 0.7
+    npp.duration = 7.0
+    npp.calculate_alpha()
+    assert round(npp.alpha,4) == 0.0067
+
+def test_calculate_alpha_1_14():
+    npp = Project()
+    npp.epsilon = 1.0
+    npp.duration = 14.0
+    npp.calculate_alpha()
+    assert round(npp.alpha,4) == 0.0891
