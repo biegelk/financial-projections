@@ -61,6 +61,10 @@ def test_import_CFS_dividends_paid():
     ut = Utility("check", time_horizon, hist)
     assert int(round(ut.dividends_paid[hist-1])) == 1026
 
+def test_import_CFS_share_price():
+    ut = Utility("check", time_horizon, hist)
+    assert int(round(ut.share_price[hist-1])) == 30
+
 
 ## TEST INITIAL (PRE-PROJECT) INCOME STATEMENT REFRESH
 
