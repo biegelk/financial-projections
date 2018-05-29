@@ -51,11 +51,14 @@ class Utility:
         self.fcf = np.zeros(time_horizon+hist)
         self.shares_outstanding = np.zeros(time_horizon+hist)
         self.dps = np.zeros(time_horizon+hist)
+        self.share_price = np.zeros(time_horizon+hist)
+        self.npp_shares = np.zeros(time_horizon+hist)
 
 
         # Capital Structure
         self.debt_fraction = 1.0
         self.equity_fraction = 1 - self.debt_fraction
+        self.equity_discount = 0.0 # Discount from market price for new equity offerings
 
 
         # Load financial data from csv
@@ -97,6 +100,7 @@ class Utility:
                 self.shares_outstanding[0:hist] = row[1:hist+1] if row[0] == 'SharesOutstanding' else self.shares_outstanding[0:hist]
                 self.capex[0:hist] = row[1:hist+1] if row[0] == 'CapEx' else self.capex[0:hist]
                 self.delta_wc[0:hist] = row[1:hist+1] if row[0] == 'DeltaWC' else self.delta_wc[0:hist]
+                self.share_price[0:hist] = row[1+hist+1] if row[0] == 'SharePrice' else self.share_price[0:hist]
 
 
 
@@ -194,6 +198,18 @@ class Utility:
             writer.writerow(np.concatenate((['Dividends Paid'], self.dividends_paid)))
             writer.writerow(np.concatenate((['Shares Outstanding'], self.shares_outstanding)))
             writer.writerow(np.concatenate((['Dividend Yield'], self.dps)))
+            writer.writerow(np.concatenate((['Share Price'], self.share_price)))
+
+
+    def finance_project(self, npp):
+         # Account for project-related debt
+        self.npp_debt[:m.ceil(npp.duration)] = npp.cum_spend * self.debt_fraction
+        self.npp_debt = prime_mover(self.npp_debt, m.ceil(npp.duration), 0.0)
+
+        # Account for project-related equity issuance
+        for i in range(m.ceil(npp.duration)):
+            self.npp_shares[i] = npp.inc_spend * self.equity_fraction / (self.share_price[i] * (1 - self.equity_discount) )
+            self.shares_outstanding += self.npp_shares[i]       
 
 
     def incorporate_project(self, npp):
@@ -211,10 +227,6 @@ class Utility:
         for i in range(int(m.ceil(npp.duration)),time_horizon+hist):
             self.depreciation[i:] += npp.total_cost / econ_life
 
-        # Account for project-related debt
-        self.npp_debt[:m.ceil(npp.duration)] = npp.cum_spend * self.debt_fraction
-        self.npp_debt = prime_mover(self.npp_debt, m.ceil(npp.duration), 0.0)
-
         # Account for plant operational outcomes
         self.revenues[m.ceil(npp.duration)-1:] += npp.annual_revenue
         self.fuel[m.ceil(npp.duration)-1:] += npp.annual_fuel_cost
@@ -224,6 +236,7 @@ class Utility:
     def initialize_CFS(self):
         # Dividends
         self.dividends_paid = secondary_mover(self.dividends_paid, self.net_income, hist, payout_ratio)
+        print(self.dividends_paid)
 
         # Capital Expenditures
         self.capex = prime_mover(self.capex, hist, ppe_growth)
@@ -239,11 +252,15 @@ class Utility:
         self.shares_outstanding = prime_mover(self.shares_outstanding, hist, 0.0)
         self.dps = metric_ratio(self.dps, self.dividends_paid, self.shares_outstanding)
 
+        # Share price
+        self.share_price = prime_mover(self.share_price, hist, 0.0)
+
        
     def refresh_CFS(self, npp, hist):
         self.capex = prime_mover(self.capex, m.ceil(hist), 0.0)
         self.fcf = summary_line(self.fcf, self.net_income, self.depreciation, (-1)*self.capex, (-1)*self.delta_wc)
         self.shares_outstanding = prime_mover(self.shares_outstanding, m.ceil(npp.duration), 0.0)
-        self.dividends_paid = secondary_mover(self.dividends_paid, self.net_income, hist, payout_ratio)
-        self.dps = metric_ratio(self.dps, self.dividends_paid, self.shares_outstanding)      
+        print(len(self.dividends_paid))
+        self.dividends_paid = secondary_mover(self.dividends_paid, self.net_income, 0, payout_ratio)
+        self.dps = metric_ratio(self.dps, self.dividends_paid, self.shares_outstanding)
 
