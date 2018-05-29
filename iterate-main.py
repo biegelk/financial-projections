@@ -15,8 +15,8 @@ from build import *
 from constants import *
 from utility import *
 
-num_iterations = 100000
-make_plots = 1
+num_iterations = 1
+make_plots = 0
 
 npvs = np.zeros(num_iterations)
 lcoes = np.zeros(num_iterations)
@@ -31,7 +31,7 @@ no_problem = 0
 for i in range(num_iterations):
     # Create utility object, calling selected financial data profile
     # Currently available options: "so" and "scg"
-    ut = Utility("so", time_horizon, hist)
+    ut = Utility("check", time_horizon, hist)
     ut.initialize_IS()
     ut.initialize_CFS()
 
@@ -50,6 +50,7 @@ for i in range(num_iterations):
     # Compute project NPV
     npp.get_npv()
 
+    ut.finance_project(npp)
     ut.incorporate_project(npp)
 
     ut.refresh_IS(hist)

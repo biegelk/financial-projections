@@ -56,7 +56,7 @@ class Utility:
 
 
         # Capital Structure
-        self.debt_fraction = 1.0
+        self.debt_fraction = 0.5
         self.equity_fraction = 1 - self.debt_fraction
         self.equity_discount = 0.0 # Discount from market price for new equity offerings
 
@@ -208,8 +208,9 @@ class Utility:
 
         # Account for project-related equity issuance
         for i in range(m.ceil(npp.duration)):
-            self.npp_shares[i] = npp.inc_spend * self.equity_fraction / (self.share_price[i] * (1 - self.equity_discount) )
-            self.shares_outstanding += self.npp_shares[i]       
+            self.npp_shares[i] = npp.inc_spend[i] * self.equity_fraction / (self.share_price[i] * (1 - self.equity_discount) )
+            self.shares_outstanding[i] += self.npp_shares[i]
+        self.shares_outstanding = prime_mover(self.shares_outstanding, m.ceil(npp.duration), 0.0)
 
 
     def incorporate_project(self, npp):
@@ -236,7 +237,6 @@ class Utility:
     def initialize_CFS(self):
         # Dividends
         self.dividends_paid = secondary_mover(self.dividends_paid, self.net_income, hist, payout_ratio)
-        print(self.dividends_paid)
 
         # Capital Expenditures
         self.capex = prime_mover(self.capex, hist, ppe_growth)
@@ -260,7 +260,5 @@ class Utility:
         self.capex = prime_mover(self.capex, m.ceil(hist), 0.0)
         self.fcf = summary_line(self.fcf, self.net_income, self.depreciation, (-1)*self.capex, (-1)*self.delta_wc)
         self.shares_outstanding = prime_mover(self.shares_outstanding, m.ceil(npp.duration), 0.0)
-        print(len(self.dividends_paid))
         self.dividends_paid = secondary_mover(self.dividends_paid, self.net_income, 0, payout_ratio)
         self.dps = metric_ratio(self.dps, self.dividends_paid, self.shares_outstanding)
-
