@@ -25,7 +25,7 @@ class Project:
         self.capital_npv = 0
         self.npv = 0
         self.delay_limits = [2, 2, 2, 2, 2]
-        self.alpha = 0
+        self.alpha = 0.
         self.epsilon = 2
         self.a = 0.0
         self.b = 0.0
@@ -55,10 +55,27 @@ class Project:
 
 
     def calculate_alpha(self):
-        self.alpha = (-1 + m.sqrt(1+(4-16/m.pi)*self.epsilon + (16/m.pi**2)*self.epsilon**2)) / (2*self.duration * (0.5 - 2*(1+self.epsilon)/m.pi**2))
+        self.alpha = 1.0
+        i = 1
+        acceptable_alpha = False
+        while acceptable_alpha == False:
+            print(self.alpha)
+            if m.exp(self.alpha*self.duration) - 2*(1+self.epsilon)*self.alpha**2 * self.duration**2/(m.pi**2) >= 1.05 * (2*(1+self.epsilon) -1):
+                self.alpha = self.alpha / m.sqrt(i)
+                i += 1
+            elif m.exp(self.alpha*self.duration) - 2*(1+self.epsilon)*self.alpha**2 * self.duration**2/(m.pi**2) <= 0.95 * (2*(1+self.epsilon) -1):
+                self.alpha = 1 / m.sqrt(i) * self.alpha
+                i += 1
+            elif i > 10:
+                acceptable_alpha = True
+            else:
+                acceptable_alpha = True
+ 
+
+#        self.alpha = (-1 + m.sqrt(1+(4-16/m.pi)*self.epsilon + (16/m.pi**2)*self.epsilon**2)) / (2*self.duration * (0.5 - 2*(1+self.epsilon)/m.pi**2))
 
     def calculate_epsilon(self):
-        while self.epsilon >= 1.4:
+        while self.epsilon >= 2:
             self.epsilon = np.random.gamma(1.2, 0.6)
 
 
@@ -90,35 +107,6 @@ class Project:
 
         # Update total final project cost
         self.total_cost = self.cum_spend[-1] + self.cum_idc[-1]
-
-
-#    def spend_profile(self):
-#        self.inc_spend = np.zeros(m.ceil(self.duration))
-#        self.cum_spend = np.zeros(m.ceil(self.duration))
-#        # Set incremental spend
-#        self.idc = np.zeros(m.ceil(self.duration))
-#        for i in range(int(m.floor(self.duration))):
-#            self.inc_spend[i] = self.total_cost*(-1/2)*(m.cos(m.pi*(i+1)/self.duration) - m.cos(m.pi*i/self.duration))
-#        self.inc_spend[-1] = self.total_cost - np.sum(self.inc_spend[:-1])
-
-#        # Tally cumulative spend
-#        for i in range(int(m.ceil(self.duration))):
-#            for j in range(int(m.ceil(self.duration))):
-#                if j >= i:
-#                    self.cum_spend[j] += self.inc_spend[i]
-
-#        # If capitalizing interest, add IDC to year 0's project spend
-#        self.idc[0] = self.cum_spend[0]/2 * mcd
-#        if cap_interest: 
-#            self.inc_spend[0] += self.cum_spend[0]/2 * mcd if cap_interest else self.inc_spend[0]
-#            self.cum_spend[0] += self.cum_spend[0]/2 * mcd if cap_interest else self.cum_spend[0]
-#            for i in range(1,int(m.ceil(self.duration))):
-#                self.idc[i] = self.cum_spend[i-1] * mcd
-#                self.cum_spend[i] += self.idc[i] if self.cap_interest else self.cum_spend[i]
-#                self.inc_spend += self.idc[i] - self.idc[i-1]
-
-#        # Update total final project cost
-#        self.total_cost = self.cum_spend[-1]
 
 
     def build_plant(self):
