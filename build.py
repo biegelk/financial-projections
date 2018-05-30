@@ -54,20 +54,29 @@ class Project:
             self.duration = np.sum(self.stage_durations)
 
 
+    def alpha_func(self, alpha, duration, epsilon):
+        return m.exp(float(alpha) * float(duration)) - 2*(1+float(epsilon))*(float(alpha)**2)*(float(duration)**2)/(m.pi**2) - 2*(1+float(epsilon)) + 1
+
+
     def seek_alpha(self):
+        '''Bisection search implementation'''
         self.alpha = 0.1
+        result = 0.0
         i = 1.0
+        a = amin
+        b = amax
         while i < 500:
-            if m.exp(self.alpha*self.duration) - 2*(1+self.epsilon)*self.alpha**2 * self.duration**2/(m.pi**2) >= 1.0001 * (2*(1+self.epsilon) -1):
-                self.alpha = self.alpha * (1 - 2/(i + 1.2))
-                i += 1
-            elif m.exp(self.alpha*self.duration) - 2*(1+self.epsilon)*self.alpha**2 * self.duration**2/(m.pi**2) <= 0.9999 * (2*(1+self.epsilon) -1):
-                self.alpha = self.alpha * (1 + 1/i)
+            c = (float(a) + float(b)) / 2.
+            result = self.alpha_func(c, self.duration, self.epsilon)
+            if round(result, 8) == 0:
+                break
+            elif result < 0:
+                a = c
                 i += 1
             else:
-                print("i =", i)
-                print("alpha =", self.alpha)
-                break
+                b = c
+                i += 1
+        self.alpha = c
  
 
     def calculate_epsilon(self):

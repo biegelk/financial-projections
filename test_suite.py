@@ -212,8 +212,8 @@ def test_seek_alpha_iteratively():
             npp.epsilon = float(row[0])
             npp.duration = float(row[1])
             npp.seek_alpha()
-            assert npp.alpha <= 1.01 * float(row[2])
-            assert npp.alpha >= 0.99 * float(row[2])
+            assert npp.alpha <= 1.00001 * float(row[2])
+            assert npp.alpha >= 0.99999 * float(row[2])
 
 def test_incremental_spend_total_w_esc_w_delay():
     for i in range(50):
