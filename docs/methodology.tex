@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage{amsmath}
+\usepackage{cite}
 \usepackage{array}
 \usepackage{booktabs}
 
@@ -76,6 +77,8 @@ The total project duration $d$ is the total of the durations of all stages:
 
 \subsection{Cost Escalation}
 
+\subsubsection{Basic Escalation Model Form}
+
 For most historical projects, cost escalation occurred in all stages of the project and became more severe over time.
 The new incremental and cumulative expenditure functions are named $I_e(t)$ and $E_e(t)$, respectively.
 The behavior of these functions is predicated on an escalated total final project cost at time $d$:
@@ -99,27 +102,44 @@ An appropriate exponential growth rate $\alpha$ must be determined, in order to 
   \int_0^d \! {I_0(t) \, e^{\alpha t} \, \mathrm{d}t} = E_0(d) \, \left( 1 + \epsilon \right)
 \end{equation}
 
+\subsubsection{Determining the Appropriate Escalation Rate Factor, $\alpha$}
+
 Evaluating the integral and some algebraic manipulation produce the analytically unsolvable expression:
 
 \begin{equation} \label{non-an}
   e^{\alpha d} - \frac{2 (1 + \epsilon) {\alpha}^2 d^2}{\pi^2} = 2 (1 + \epsilon) - 1
 \end{equation}
 
-However, inputting some likely values for the parameters $\alpha$, $\epsilon$, and $d$ demonstrates that the second term is negligible over value ranges of interest.
-
-\begin{center}
-\begin{tabular}{| c | c | c | c | c | c |}
-  \hline
-  $\alpha$ & $\epsilon$ & d & $e^{\alpha d}$ & $\frac{2 (1 + \epsilon) {\alpha}^2 d^2}{\pi^2}$& $2(1 + \epsilon) - 1$  \\ \hline
-  0.01 & 0.1 & 10 & 1.001 & 0.00223 & 1.2 \\ \hline
-  0.03 & 0.5 & 12 & 1.43 & 0.039 & 2.0 \\ \hline 
-\end{tabular}
-\end{center}
-
-Thus, $e^{\alpha d} \gg \frac{2 (1 + \epsilon) {\alpha}^2 d^2}{\pi^2}$ and $2(1 + \epsilon) - 1 \gg \frac{2 (1 + \epsilon) {\alpha}^2 d^2}{\pi^2}$, and the second term is neglected. Equation \eqref{non-an} therefore reduces to:
+The bisection method is an efficient way to evaluate this expression for alpha, using probabilistically-generated values of $\epsilon$ and $d$.
+To guarantee that such a search will be able to locate the appropriate value, it must be demonstrated that the following function $f(\alpha, d, \epsilon)$ is monotonic over all possible values of $\alpha$, $d$, and $\epsilon$.
 
 \begin{equation}
-  \alpha = \frac{1}{d} \ln \left(1 + 2 \epsilon \right)
+  f(\alpha, d, \epsilon) = e^{\alpha d} - \frac{2 (1 + \epsilon) \alpha^2 d^2}{\pi^2} - 2 (1 + \epsilon) + 1
 \end{equation}
+
+If $f$ is not monotonic in the region of interest, there will be multiple solutions for $\alpha$, and the search will merely locate one of them without regard to their validity.
+Monotonicity is proven if the partial derivative of $f$ with respect to $\alpha$ is positive everywhere in its valid domain:
+
+\begin{equation}
+  \frac{\partial f}{\partial \alpha} = d e^{\alpha d} - \frac{4 (1 + \epsilon) d^2}{\pi^2} \alpha \ge 0, \hspace{0.5 cm} \alpha \in [0, 2], \, d \in [5, 15], \, \epsilon \in [0, 2]
+\end{equation}
+
+The bisection method will evaluate the fitness of varying values of $\alpha$ for fixed values of $d$ and $\epsilon$, so it is sufficient to explore the monotonicity of the partial derivative with respect to $\alpha$, rather than the gradient of $f$.
+
+The value ranges for $d$ and $\epsilon$ are set in accordance with the model's limits for acceptable escalation parameters.
+The value range for $\alpha$ was set after experimentation with the resultant alpha values for a set of test $d$ and $\epsilon$ values that spanned their respective permitted value ranges.
+Actual realistic values of $\alpha$ are expected to be substantially less than 1; however, for the sake of robustness, $\alpha$ is evaluated up to 2.
+
+$\frac{\partial f}{\partial \alpha}$ was evaluated iteratively for 1000 values each of $\alpha$, $d$, and $\epsilon$, evenly spanning their value ranges. See figures X and Y for plots. \\
+
+\begin{center}
+  [plots forthcoming]
+\end{center}
+
+In all tested cases the value of the partial derivative was greater than zero. Therefore, $f(\alpha, d, \epsilon)$ is monotonic and the binary-search approach for calculating appropriate $\alpha$ values is valid.
+
+
+%\bibliography{methodology}{}
+%\bibliographystyle{plain}
 
 \end{document}
