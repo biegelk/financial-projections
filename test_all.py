@@ -6,6 +6,7 @@ from constants import *
 import numpy as np
 import random as rand
 from math import *
+import csv
 
 ## TEST NONSUMMARY IMPORTATION
 
@@ -203,6 +204,23 @@ def test_incremental_spend_half_no_esc_w_delay():
     npp.delay_schedule()
     assert npp.incremental_spend(0, 0.5*npp.duration) == 3000
 
+def test_seek_alpha_iteratively():
+    npp = Project()
+    with open("./profiles/alpha-checkfile.csv", "r") as cf:
+        alpha_data = csv.reader(cf, delimiter = ",", quotechar = "\"")
+        for row in alpha_data:
+            npp.epsilon = row[0]
+            npp.duration = row[1]
+            npp.seek_alpha()
+            assert self.alpha == row[2]
+
+#def test_seek_alpha_1_14():
+#    npp = Project()
+#    npp.epsilon = 1.0
+#    npp.duration = 14.0
+#    npp.seek_alpha()
+#    assert round(npp.alpha,4) == 0.0891
+
 def test_incremental_spend_total_w_esc_w_delay():
     for i in range(10):
         npp = Project()
@@ -212,16 +230,4 @@ def test_incremental_spend_total_w_esc_w_delay():
         assert npp.incremental_spend(0, npp.duration) <= 1.1*6000*(1+npp.epsilon)
 
 
-def test_calculate_alpha_07_7():
-    npp = Project()
-    npp.epsilon = 0.7
-    npp.duration = 7.0
-    npp.calculate_alpha()
-    assert round(npp.alpha,4) == 0.0067
 
-def test_calculate_alpha_1_14():
-    npp = Project()
-    npp.epsilon = 1.0
-    npp.duration = 14.0
-    npp.calculate_alpha()
-    assert round(npp.alpha,4) == 0.0891

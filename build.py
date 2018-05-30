@@ -54,25 +54,20 @@ class Project:
             self.duration = np.sum(self.stage_durations)
 
 
-    def calculate_alpha(self):
-        self.alpha = 1.0
-        i = 1
-        acceptable_alpha = False
-        while acceptable_alpha == False:
+    def seek_alpha(self):
+        self.alpha = 0.1
+        i = 1.0
+        while i < 100:
             print(self.alpha)
-            if m.exp(self.alpha*self.duration) - 2*(1+self.epsilon)*self.alpha**2 * self.duration**2/(m.pi**2) >= 1.05 * (2*(1+self.epsilon) -1):
-                self.alpha = self.alpha / m.sqrt(i)
+            if m.exp(self.alpha*self.duration) - 2*(1+self.epsilon)*self.alpha**2 * self.duration**2/(m.pi**2) >= 1.01 * (2*(1+self.epsilon) -1):
+                self.alpha = self.alpha * (1 - 2/(i + 1.2))
                 i += 1
-            elif m.exp(self.alpha*self.duration) - 2*(1+self.epsilon)*self.alpha**2 * self.duration**2/(m.pi**2) <= 0.95 * (2*(1+self.epsilon) -1):
-                self.alpha = 1 / m.sqrt(i) * self.alpha
+            elif m.exp(self.alpha*self.duration) - 2*(1+self.epsilon)*self.alpha**2 * self.duration**2/(m.pi**2) <= 0.99 * (2*(1+self.epsilon) -1):
+                self.alpha = self.alpha * (1 + 1/i)
                 i += 1
-            elif i > 10:
-                acceptable_alpha = True
             else:
-                acceptable_alpha = True
+                break
  
-
-#        self.alpha = (-1 + m.sqrt(1+(4-16/m.pi)*self.epsilon + (16/m.pi**2)*self.epsilon**2)) / (2*self.duration * (0.5 - 2*(1+self.epsilon)/m.pi**2))
 
     def calculate_epsilon(self):
         while self.epsilon >= 2:
@@ -81,8 +76,7 @@ class Project:
 
     def escalate_cost(self):
         self.calculate_epsilon()
-#        self.alpha = 1/self.duration * m.log(1 + 2*self.epsilon)
-        self.calculate_alpha()
+        self.seek_alpha()
         print("alpha =", self.alpha)
 
 
