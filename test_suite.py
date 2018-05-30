@@ -209,25 +209,19 @@ def test_seek_alpha_iteratively():
     with open("./profiles/alpha-checkfile.csv", "r") as cf:
         alpha_data = csv.reader(cf, delimiter = ",", quotechar = "\"")
         for row in alpha_data:
-            npp.epsilon = row[0]
-            npp.duration = row[1]
+            npp.epsilon = float(row[0])
+            npp.duration = float(row[1])
             npp.seek_alpha()
-            assert self.alpha == row[2]
-
-#def test_seek_alpha_1_14():
-#    npp = Project()
-#    npp.epsilon = 1.0
-#    npp.duration = 14.0
-#    npp.seek_alpha()
-#    assert round(npp.alpha,4) == 0.0891
+            assert npp.alpha <= 1.01 * float(row[2])
+            assert npp.alpha >= 0.99 * float(row[2])
 
 def test_incremental_spend_total_w_esc_w_delay():
-    for i in range(10):
+    for i in range(50):
         npp = Project()
         npp.delay_schedule()
         npp.escalate_cost()
-        assert npp.incremental_spend(0, npp.duration) >= 0.9*6000*(1+npp.epsilon)
-        assert npp.incremental_spend(0, npp.duration) <= 1.1*6000*(1+npp.epsilon)
+        assert npp.incremental_spend(0, npp.duration) >= 0.99*6000*(1+npp.epsilon)
+        assert npp.incremental_spend(0, npp.duration) <= 1.01*6000*(1+npp.epsilon)
 
 
 

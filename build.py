@@ -57,15 +57,16 @@ class Project:
     def seek_alpha(self):
         self.alpha = 0.1
         i = 1.0
-        while i < 100:
-            print(self.alpha)
-            if m.exp(self.alpha*self.duration) - 2*(1+self.epsilon)*self.alpha**2 * self.duration**2/(m.pi**2) >= 1.01 * (2*(1+self.epsilon) -1):
+        while i < 500:
+            if m.exp(self.alpha*self.duration) - 2*(1+self.epsilon)*self.alpha**2 * self.duration**2/(m.pi**2) >= 1.0001 * (2*(1+self.epsilon) -1):
                 self.alpha = self.alpha * (1 - 2/(i + 1.2))
                 i += 1
-            elif m.exp(self.alpha*self.duration) - 2*(1+self.epsilon)*self.alpha**2 * self.duration**2/(m.pi**2) <= 0.99 * (2*(1+self.epsilon) -1):
+            elif m.exp(self.alpha*self.duration) - 2*(1+self.epsilon)*self.alpha**2 * self.duration**2/(m.pi**2) <= 0.9999 * (2*(1+self.epsilon) -1):
                 self.alpha = self.alpha * (1 + 1/i)
                 i += 1
             else:
+                print("i =", i)
+                print("alpha =", self.alpha)
                 break
  
 
