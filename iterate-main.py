@@ -15,8 +15,8 @@ from build import *
 from constants import *
 from utility import *
 
-num_iterations = 1
-make_plots = 0
+num_iterations = 10000
+make_plots = 1
 
 npvs = np.zeros(num_iterations)
 lcoes = np.zeros(num_iterations)

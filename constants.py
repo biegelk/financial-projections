@@ -7,6 +7,9 @@ hist = 6
 rand_esc = 0 # Activate probabilistic (simple uniform) project delay?
 rand_delay = 1 # Activate probabilistic (uniform) project delay?
 cap_interest = 1 # Capitalize interest during construction?
+amin = 0 # Minimum value of alpha examined
+amax = 2 # Maximum value of alpha examined
+
 
 # Firm financial constants
 tax_rate = 0.335

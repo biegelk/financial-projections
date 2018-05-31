@@ -63,13 +63,13 @@ class Utility:
 
         # Load financial data from csv
         if name == "so":
-            isfile = "./profiles/income-statement-so.csv"
+            isfile = "./data/profiles/income-statement-so.csv"
         elif name == "scg":
-            isfile = "./profiles/income-statement-scg.csv"
+            isfile = "./data/profiles/income-statement-scg.csv"
         elif name == "check":
-            isfile = "./profiles/omnibus-checkfile-static.csv"
+            isfile = "./data/profiles/omnibus-checkfile-static.csv"
         else:
-            ("Utility IS not available")
+            ("Utility not available")
             exit()
         with open(isfile, 'r') as df:
             is_data = csv.reader(df, delimiter = ',', quotechar = '\"')
@@ -88,11 +88,11 @@ class Utility:
                 self.capex[0:hist]           = row[1:hist+1] if row[0] == 'CapEx'                  else self.capex[0:hist]
                 self.delta_wc[0:hist]        = row[1:hist+1] if row[0] == 'DeltaWC'                else self.delta_wc[0:hist]
         if name == "so":
-            cfsfile = "./profiles/cash-flow-statement-so.csv"
+            cfsfile = "./data/profiles/cash-flow-statement-so.csv"
         elif name == "check":
-            cfsfile = "./profiles/omnibus-checkfile-static.csv"
+            cfsfile = "./data/profiles/omnibus-checkfile-static.csv"
         else:
-            print("Utility CFS not available")
+            print("Utility not available")
         with open(cfsfile, 'r') as df:
             cfs_data = csv.reader(df, delimiter = ',', quotechar = '\"')
             for row in cfs_data:

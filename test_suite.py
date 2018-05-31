@@ -206,7 +206,7 @@ def test_incremental_spend_half_no_esc_w_delay():
 
 def test_seek_alpha_iteratively():
     npp = Project()
-    with open("./profiles/alpha-checkfile.csv", "r") as cf:
+    with open("./data/profiles/alpha-checkfile.csv", "r") as cf:
         alpha_data = csv.reader(cf, delimiter = ",", quotechar = "\"")
         for row in alpha_data:
             npp.epsilon = float(row[0])

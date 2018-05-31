@@ -49,7 +49,7 @@ class Project:
         if rand_delay:
             for i in range(5):
                 while self.stage_escalation[i] >= 2: # cap permissible delay values
-                    self.stage_escalation[i] = 1/300 * np.random.gamma(sgamma_params[i][0], sgamma_params[i][1])
+                    self.stage_escalation[i] = 1/250 * np.random.gamma(sgamma_params[i][0], sgamma_params[i][1])
                 self.stage_durations[i] = self.stage_durations[i] * (1 + self.stage_escalation[i])
             self.duration = np.sum(self.stage_durations)
 
@@ -87,7 +87,6 @@ class Project:
     def escalate_cost(self):
         self.calculate_epsilon()
         self.seek_alpha()
-        print("alpha =", self.alpha)
 
 
     def spend_profile(self):
