@@ -163,7 +163,7 @@ class Utility:
         self.net_income = summary_line(self.net_income, self.ebt, (-1)*self.income_tax)
 
     def write_csv(self):
-        with open('checkfile.csv', 'w') as checkfile:
+        with open('./data/checkfile.csv', 'w') as checkfile:
             writer = csv.writer(checkfile, delimiter = ',', quotechar = '\"')
             # Income Statement
             writer.writerow(['', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027'])

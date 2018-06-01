@@ -91,7 +91,7 @@ for i in range(num_iterations):
 print("Average total cash shortage within forecast period = ", np.mean(total_cash_shortage))
 print("Std. dev total cash shortage within forecast period = ", np.std(total_cash_shortage))
 
-with open('./results.csv', 'w') as outfile:
+with open('./data/results.csv', 'w') as outfile:
     writer = csv.writer(outfile)
     writer.writerow(['Cost', 'Duration', 'NPV', 'LCOE'])
     for i in range(num_iterations):
