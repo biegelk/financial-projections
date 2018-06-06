@@ -15,7 +15,7 @@ from build import *
 from constants import *
 from utility import *
 
-num_iterations = 10000
+num_iterations = 500
 make_plots = 1
 
 npvs = np.zeros(num_iterations)
@@ -37,14 +37,13 @@ for i in range(num_iterations):
 
     # Simulate plant construction project and return spend profiles
     npp = Project()
-    npp.build_plant()
+    npp.build_plant(ut)
 
     # Compute project LCOE
     npp.get_lcoe()
     if i == 495:
         print(npp.inc_idc)
-        print(npp.inc_spend)
-        print(npp.cum_spend)
+        print(npp.cum_idc)
         print("annual capital payment = $", npp.annual_capital_payment)
 
     # Compute project NPV
@@ -104,7 +103,7 @@ if make_plots:
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.set(xlabel = 'Total Construction Cost ($M)', title = 'Cost Outcomes')
-    plt.hist(costs, 40)
+    plt.hist(costs, int(num_iterations / 50.))
     plt.show()
 
     # Duration histogram

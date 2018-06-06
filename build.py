@@ -20,11 +20,11 @@ class Project:
         self.duration = init_schedule
 
         self.stage_durations = np.ones(self.init_schedule) * float(self.init_schedule) / 5.
-        self.stage_escalation = 3*np.ones(5) # placeholder values to enforce cap on np.random.gamma values
+        self.stage_escalation = 5*np.ones(5) # placeholder values to enforce cap on np.random.gamma values
         self.annual_capital_payment = 0.0
         self.capital_npv = 0
         self.npv = 0
-        self.delay_limits = [2, 2, 2, 2, 2]
+        self.max_delay = 3.0
         self.alpha = 0.
         self.epsilon = 2
         self.a = 0.0
@@ -42,16 +42,15 @@ class Project:
 
 
     def incremental_spend(self, T1, T2):
-        return self.total_cost*m.pi/2 * (m.exp(self.alpha*T2)*(self.alpha*self.duration*m.sin(m.pi*T2/self.duration)-m.pi*m.cos(m.pi*T2/self.duration))/(self.alpha**2*self.duration**2 + m.pi**2) - m.exp(self.alpha*T1)*(self.alpha*self.duration*m.sin(m.pi*T1/self.duration) - m.pi*m.cos(m.pi*T1/self.duration))/(self.alpha**2*self.duration**2+m.pi**2))
+        #return (m.exp(self.alpha*T2)*(self.alpha*self.duration*m.sin(m.pi*T2/self.duration)-m.pi*m.cos(m.pi*T2/self.duration))/(self.alpha**2*self.duration**2 + m.pi**2) - m.exp(self.alpha*T1)*(self.alpha*self.duration*m.sin(m.pi*T1/self.duration) - m.pi*m.cos(m.pi*T1/self.duration))/(self.alpha**2*self.duration**2+m.pi**2))
+        return self.total_cost*m.pi/2. * (m.exp(self.alpha*T2)*(self.alpha*self.duration*m.sin(m.pi*T2/self.duration)-m.pi*m.cos(m.pi*T2/self.duration))/(self.alpha**2*self.duration**2 + m.pi**2) - m.exp(self.alpha*T1)*(self.alpha*self.duration*m.sin(m.pi*T1/self.duration) - m.pi*m.cos(m.pi*T1/self.duration))/(self.alpha**2*self.duration**2+m.pi**2))
         
 
     def delay_schedule(self):
         if rand_delay:
-            for i in range(5):
-                while self.stage_escalation[i] >= 2: # cap permissible delay values
-                    self.stage_escalation[i] = 1/250 * np.random.gamma(sgamma_params[i][0], sgamma_params[i][1])
-                self.stage_durations[i] = self.stage_durations[i] * (1 + self.stage_escalation[i])
-            self.duration = np.sum(self.stage_durations)
+            self.duration = self.init_schedule * (1. + np.random.gamma(sgamma_params[0], sgamma_params[1]) - sgamma_deshift)
+        while self.duration >= 15:
+            self.duration = self.init_schedule * (1. + np.random.gamma(sgamma_params[0], sgamma_params[1]) - sgamma_deshift)
 
 
     def alpha_func(self, alpha, duration, epsilon):
@@ -80,8 +79,9 @@ class Project:
  
 
     def calculate_epsilon(self):
-        while self.epsilon >= 2:
-            self.epsilon = np.random.gamma(1.2, 0.6)
+        self.epsilon = 0.0
+        #while self.epsilon >= 2:
+        #    self.epsilon = np.random.gamma(1.2, 0.6)
 
 
     def escalate_cost(self):
@@ -89,7 +89,7 @@ class Project:
         self.seek_alpha()
 
 
-    def spend_profile(self):
+    def spend_profile(self, ut):
         # Initialize spend vectors with appropriate lengths
         self.inc_spend = np.zeros(int(m.ceil(self.duration)))
         self.cum_spend = np.zeros(int(m.ceil(self.duration)))
@@ -101,21 +101,22 @@ class Project:
         for i in range(int(m.ceil(self.duration))-1):
             self.inc_spend[i] = self.incremental_spend(i,i+1)
             self.cum_spend[i:] += self.inc_spend[i]
-            self.inc_idc[i] = (self.cum_spend[i] + self.cum_idc[i]) * mcd
+            self.inc_idc[i] = (self.cum_spend[i] + self.cum_idc[i]) * ut.debt_fraction * mcd
             self.cum_idc[i:] += self.inc_idc[i]
         self.inc_spend[-1] = self.incremental_spend(m.floor(self.duration), self.duration)
         self.cum_spend[-1] += self.inc_spend[-1]
-        self.inc_idc[-1] = (self.cum_spend[-1] + self.cum_idc[i]) * mcd
+        self.inc_idc[-1] = (self.cum_spend[-1] + self.cum_idc[-1]) * ut.debt_fraction * mcd
         self.cum_idc[-1] += self.inc_idc[-1]
 
         # Update total final project cost
-        self.total_cost = self.cum_spend[-1] + self.cum_idc[-1]
+        #self.total_cost = self.cum_spend[-1] + self.cum_idc[-1]
+        self.total_cost = self.cum_idc[-1]
 
 
-    def build_plant(self):
+    def build_plant(self, ut):
         self.delay_schedule()
         self.escalate_cost()
-        self.spend_profile()
+        self.spend_profile(ut)
         self.annual_capital_payment = self.total_cost * mcd / (1 - (1+mcd)**(-term))
 
 
