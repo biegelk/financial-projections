@@ -109,13 +109,12 @@ class Project:
         self.cum_spend[-1] += self.inc_spend[-1]
 
         # Track financing costs, using ut's capital structure and assuming all interest is capitalized
-        # TODO: allow expensed interest
         # Other years (EOP partial-year fragment poses no problem to incorporation here):
-        for i in range(0,int(m.ceil(self.duration))):
+        for i in range(0,int(m.floor(self.duration))):
             self.inc_idc[i] = (self.cum_spend[i] + self.cum_idc[i]) * ut.debt_fraction * mcd
             self.cum_idc[i:] += self.inc_idc[i]
         # add impact of final year new inc_idc:
-        self.inc_idc[-1] =  (self.cum_spend[-1] + self.cum_idc[-1]) * ut.debt_fraction * mcd
+        self.inc_idc[-1] =  (self.cum_spend[-1] + self.cum_idc[-1]) * ut.debt_fraction * mcd * (self.duration - m.floor(self.duration))
         self.cum_idc[-1] += self.inc_idc[-1]
 
 
