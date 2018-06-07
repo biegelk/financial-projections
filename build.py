@@ -90,27 +90,42 @@ class Project:
 
 
     def spend_profile(self, ut):
-        # Initialize spend vectors with appropriate lengths
+        # Initialize vectors for spend data
+        # length = project duration (loaded into appropriate slots by Utility class functions)
         self.inc_spend = np.zeros(int(m.ceil(self.duration)))
-        self.cum_spend = np.zeros(int(m.ceil(self.duration)))
-        self.inc_idc = np.zeros(int(m.ceil(self.duration)))
-        self.cum_idc = np.zeros(int(m.ceil(self.duration)))
-        self.total_cum_spend = np.zeros(int(m.ceil(self.duration)))
+        self.cum_spend = np.zeros(int(m.ceil(self.duration))) # only holds "overnight cost" spend, interest is tracked separately
+        self.inc_idc   = np.zeros(int(m.ceil(self.duration)) + 1)
+        self.cum_idc   = np.zeros(int(m.ceil(self.duration)) + 1)
+        self.total_cum_spend = np.zeros(int(m.ceil(self.duration))) # holds sum of overnight cost and financing cost spend
 
-        # Track and capitalize interest
-        for i in range(int(m.ceil(self.duration))-1):
-            self.inc_spend[i] = self.incremental_spend(i,i+1)
+        # Break known total cost into annual segments based on known duration
+        # Complete expenditure years only:
+        for i in range(int(m.floor(self.duration))):
+            self.inc_spend[i] = self.incremental_spend(float(i), float(i+1))
+            # each new incremental-spend slice contributes to running total for current and all later periods
             self.cum_spend[i:] += self.inc_spend[i]
-            self.inc_idc[i] = (self.cum_spend[i] + self.cum_idc[i]) * ut.debt_fraction * mcd
-            self.cum_idc[i:] += self.inc_idc[i]
+        # End-of-project partial-year fragment
         self.inc_spend[-1] = self.incremental_spend(m.floor(self.duration), self.duration)
         self.cum_spend[-1] += self.inc_spend[-1]
-        self.inc_idc[-1] = (self.cum_spend[-1] + self.cum_idc[-1]) * ut.debt_fraction * mcd
+
+        # Track financing costs, using ut's capital structure and assuming all interest is capitalized
+        # TODO: allow expensed interest
+        # Other years (EOP partial-year fragment poses no problem to incorporation here):
+        for i in range(0,int(m.ceil(self.duration))):
+            self.inc_idc[i] = (self.cum_spend[i] + self.cum_idc[i]) * ut.debt_fraction * mcd
+            self.cum_idc[i:] += self.inc_idc[i]
+        # add impact of final year new inc_idc:
+        self.inc_idc[-1] =  (self.cum_spend[-1] + self.cum_idc[-1]) * ut.debt_fraction * mcd
         self.cum_idc[-1] += self.inc_idc[-1]
 
+
+        # Total cumulative project spend tracker
+#        self.total_cum_spend = np.add(self.cum_spend, self.cum_idc)
+
         # Update total final project cost
-        #self.total_cost = self.cum_spend[-1] + self.cum_idc[-1]
         self.total_cost = self.cum_idc[-1]
+            
+
 
 
     def build_plant(self, ut):
