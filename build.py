@@ -49,7 +49,7 @@ class Project:
     def delay_schedule(self):
         if rand_delay:
             self.duration = self.init_schedule * (1. + np.random.gamma(sgamma_params[0], sgamma_params[1]) - sgamma_deshift)
-        while self.duration >= 15:
+        while (self.duration >= dmax) or (self.duration <= dmin):
             self.duration = self.init_schedule * (1. + np.random.gamma(sgamma_params[0], sgamma_params[1]) - sgamma_deshift)
 
 
@@ -80,7 +80,7 @@ class Project:
 
     def calculate_epsilon(self):
         #self.epsilon = 0.0
-        while self.epsilon >= 3:
+        while (self.epsilon >= emax) or (self.epsilon <= emin):
             #self.epsilon = np.random.gamma(cgamma_params[0], cgamma_params[1])
             self.epsilon = 0.2 * np.random.normal(cnorm_params[0], cnorm_params[1])
 
@@ -95,8 +95,8 @@ class Project:
         # length = project duration (loaded into appropriate slots by Utility class functions)
         self.inc_spend = np.zeros(int(m.ceil(self.duration)))
         self.cum_spend = np.zeros(int(m.ceil(self.duration))) # only holds "overnight cost" spend, interest is tracked separately
-        self.inc_idc   = np.zeros(int(m.ceil(self.duration)) + 1)
-        self.cum_idc   = np.zeros(int(m.ceil(self.duration)) + 1)
+        self.inc_idc   = np.zeros(int(m.ceil(self.duration)))
+        self.cum_idc   = np.zeros(int(m.ceil(self.duration)))
         self.total_cum_spend = np.zeros(int(m.ceil(self.duration))) # holds sum of overnight cost and financing cost spend
 
         # Break known total cost into annual segments based on known duration
@@ -120,10 +120,10 @@ class Project:
 
 
         # Total cumulative project spend tracker
-#        self.total_cum_spend = np.add(self.cum_spend, self.cum_idc)
+        self.total_cum_spend = np.add(self.cum_spend, self.cum_idc)
 
         # Update total final project cost
-        self.total_cost = self.cum_spend[-1] + self.cum_idc[-1]
+        self.total_cost = self.total_cum_spend[-1]
             
 
 
