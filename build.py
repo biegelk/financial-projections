@@ -26,7 +26,7 @@ class Project:
         self.npv = 0
         self.max_delay = 3.0
         self.alpha = 0.
-        self.epsilon = 2
+        self.epsilon = 5.
         self.a = 0.0
         self.b = 0.0
 
@@ -79,9 +79,10 @@ class Project:
  
 
     def calculate_epsilon(self):
-        self.epsilon = 0.0
-        #while self.epsilon >= 2:
-        #    self.epsilon = np.random.gamma(1.2, 0.6)
+        #self.epsilon = 0.0
+        while self.epsilon >= 3:
+            #self.epsilon = np.random.gamma(cgamma_params[0], cgamma_params[1])
+            self.epsilon = 0.2 * np.random.normal(cnorm_params[0], cnorm_params[1])
 
 
     def escalate_cost(self):
@@ -122,7 +123,7 @@ class Project:
 #        self.total_cum_spend = np.add(self.cum_spend, self.cum_idc)
 
         # Update total final project cost
-        self.total_cost = self.cum_idc[-1]
+        self.total_cost = self.cum_spend[-1] + self.cum_idc[-1]
             
 
 

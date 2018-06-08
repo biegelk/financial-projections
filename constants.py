@@ -30,17 +30,18 @@ life = 40 # years
 econ_life = 25 # years; economic useful life for straight-line depreciation
 
 # Cost escalation parameters
-# Completion milestones
-completion_steps = [0, .25, .5, .75, .9, 1]
-# Gamma-distribution parameters of empirical escalation data
-cgamma_params = [[1.236, 1/2.942], [19.893, 1/21.711], [50.734, 1/24.857], [17.499, 1/17.438]]
-cgamma_fix = [0, .73, 1.54, 0.90, 0]
+# Using: Gamma, VS, OR
+cgamma_params = [2.3595943, 1/1.6161089]
+cgamma_deshift = 0.001
+# Using: Norm, OR
+cnorm_params = [1.4588795, 0.77041806]
 
-sched_esc = [[0.063, 0.189, 0.379], [0.048, 0.116, 0.217], [0.049, 0.099, 00.174], [0.038, 0.066, 0.108], [0.048, 0.117, 0.220]]
+# Schedule escalation parameters
+# Using: Gamma, VS, OK
 sgamma_params = [2.0929615, 1/1.983719]
 sgamma_deshift = 0.05199
-#sgamma_params = [[2.328576, 1/4.145274], [0.3964225, 1/2.554244], [1.8652066, 1/9.3310657], [0.6060982, 1/6.81993987], [1.4430346, 1/7.0285575]]
-#sgamma_deshift = [0.309049, 0.001, 0.0683719, 0.001, 0.0494768]
+# sgamma_params = [[2.328576, 1/4.145274], [0.3964225, 1/2.554244], [1.8652066, 1/9.3310657], [0.6060982, 1/6.81993987], [1.4430346, 1/7.0285575]]
+# sgamma_deshift = [0.309049, 0.001, 0.0683719, 0.001, 0.0494768]
 
 # Growth rates
 rev_growth  = 0.016  # % change YOY
