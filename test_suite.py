@@ -188,21 +188,21 @@ def test_initialize_CFS_DPS():
 
 def test_incremental_spend_total_no_esc_no_delay():
     npp = Project()
-    assert npp.incremental_spend(0, npp.duration) == 6000
+    assert round(npp.incremental_spend(0, npp.duration), 6) == 6000
 
 def test_incremental_spend_half_no_esc_no_delay():
     npp = Project()
-    assert npp.incremental_spend(0, 0.5*npp.duration) == 3000
+    assert round(npp.incremental_spend(0, 0.5*npp.duration), 6) == 3000
 
 def test_incremental_spend_total_no_esc_w_delay():
     npp = Project()
     npp.delay_schedule()
-    assert npp.incremental_spend(0, npp.duration) == 6000
+    assert round(npp.incremental_spend(0, npp.duration), 6) == 6000
 
 def test_incremental_spend_half_no_esc_w_delay():
     npp = Project()
     npp.delay_schedule()
-    assert npp.incremental_spend(0, 0.5*npp.duration) == 3000
+    assert round(npp.incremental_spend(0, 0.5*npp.duration), 6) == 3000
 
 def test_seek_alpha_iteratively():
     npp = Project()
@@ -212,8 +212,9 @@ def test_seek_alpha_iteratively():
             npp.epsilon = float(row[0])
             npp.duration = float(row[1])
             npp.seek_alpha()
-            assert npp.alpha <= 1.00001 * float(row[2])
-            assert npp.alpha >= 0.99999 * float(row[2])
+            assert round(npp.alpha, 5) == round(float(row[2]), 5)
+            #assert npp.alpha <= 1.00001 * float(row[2])
+            #assert npp.alpha >= 0.99999 * float(row[2])
 
 def test_incremental_spend_total_w_esc_w_delay():
     for i in range(50):
@@ -223,5 +224,34 @@ def test_incremental_spend_total_w_esc_w_delay():
         assert npp.incremental_spend(0, npp.duration) >= 0.99*6000*(1+npp.epsilon)
         assert npp.incremental_spend(0, npp.duration) <= 1.01*6000*(1+npp.epsilon)
 
+def test_spend_profile_d75_e08():
+    ut = Utility("check", 10, 6)
+    npp = Project()
+    npp.duration = 7.5
+    npp.epsilon = 0.8
+    npp.seek_alpha()
+    npp.spend_profile(ut)
+    cs_check = [286.52298, 1210.6903, 2784.41805, 4876.66361, 7193.50904, 9288.21863, 10609.39066, 10799.99999]
+    ii_check = [10.02830, 42.7252, 99.30100, 176.00513, 263.25490, 345.78366, 404.12711, 212.47144]
+    ci_check = [10.02830, 52.75346, 152.05446, 328.05959, 591.31449, 937.09815, 1341.22526, 1553.69670]
+    for i in range(int(m.ceil(npp.duration))):
+        assert round(npp.cum_spend[i], 3) == round(cs_check[i], 3)
+        assert round(npp.inc_idc[i], 3) == round(ii_check[i], 3)
+        assert round(npp.cum_idc[i], 3) == round(ci_check[i], 3)
 
+def test_spend_profile_d149_e29():
+    ut = Utility("check", 10, 6)
+    npp = Project()
+    npp.duration = 14.9
+    npp.epsilon = 2.9
+    npp.seek_alpha()
+    npp.spend_profile(ut)
+    cs_check = [74.16361, 327.81021, 809.33618, 1566.79661, 2643.73789, 4073.79061, 5873.99551, 8036.93080, 10521.83645, 13245.09129, 16070.59111, 18800.79729, 21169.46783, 22837.33448, 23400.00000]
+    ii_check = [2.59573, 11.56421, 28.82236, 56.34226, 96.00719, 149.41928, 217.65613, 300.97683, 398.48272, 507.74353, 624.40705, 741.81851, 850.68563, 938.83496, 892.24873]
+    ci_check = [2.59573, 14.15993, 42.98230, 99.32456, 195.33175, 344.75103, 562.40716, 863.38399, 1261.86670, 1769.61023, 2394.01728, 3135.83579, 3986.52141, 4925.35637, 5817.60510]
+    for i in range(int(m.ceil(npp.duration))):
+        assert round(npp.cum_spend[i], 3) == round(cs_check[i], 3)
+        assert round(npp.inc_idc[i], 3) == round(ii_check[i], 3)
+        assert round(npp.cum_idc[i], 3) == round(ci_check[i], 3)
 
+   

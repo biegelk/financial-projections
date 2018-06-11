@@ -42,7 +42,6 @@ class Project:
 
 
     def incremental_spend(self, T1, T2):
-        #return (m.exp(self.alpha*T2)*(self.alpha*self.duration*m.sin(m.pi*T2/self.duration)-m.pi*m.cos(m.pi*T2/self.duration))/(self.alpha**2*self.duration**2 + m.pi**2) - m.exp(self.alpha*T1)*(self.alpha*self.duration*m.sin(m.pi*T1/self.duration) - m.pi*m.cos(m.pi*T1/self.duration))/(self.alpha**2*self.duration**2+m.pi**2))
         return self.total_cost*m.pi/2. * (m.exp(self.alpha*T2)*(self.alpha*self.duration*m.sin(m.pi*T2/self.duration)-m.pi*m.cos(m.pi*T2/self.duration))/(self.alpha**2*self.duration**2 + m.pi**2) - m.exp(self.alpha*T1)*(self.alpha*self.duration*m.sin(m.pi*T1/self.duration) - m.pi*m.cos(m.pi*T1/self.duration))/(self.alpha**2*self.duration**2+m.pi**2))
         
 
@@ -79,9 +78,7 @@ class Project:
  
 
     def calculate_epsilon(self):
-        #self.epsilon = 0.0
         while (self.epsilon >= emax) or (self.epsilon <= emin):
-            #self.epsilon = np.random.gamma(cgamma_params[0], cgamma_params[1])
             self.epsilon = 0.2 * np.random.normal(cnorm_params[0], cnorm_params[1])
 
 
