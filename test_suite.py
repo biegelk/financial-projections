@@ -225,7 +225,7 @@ def test_incremental_spend_total_w_esc_w_delay():
         assert npp.incremental_spend(0, npp.duration) <= 1.01*6000*(1+npp.epsilon)
 
 def test_spend_profile_d75_e08():
-    ut = Utility("check", 10, 6)
+    ut = Utility("check", time_horizon, hist)
     npp = Project()
     npp.duration = 7.5
     npp.epsilon = 0.8
@@ -240,7 +240,7 @@ def test_spend_profile_d75_e08():
         assert round(npp.cum_idc[i], 3) == round(ci_check[i], 3)
 
 def test_spend_profile_d149_e29():
-    ut = Utility("check", 10, 6)
+    ut = Utility("check", time_horizon, hist)
     npp = Project()
     npp.duration = 14.9
     npp.epsilon = 2.9
@@ -254,4 +254,41 @@ def test_spend_profile_d149_e29():
         assert round(npp.inc_idc[i], 3) == round(ii_check[i], 3)
         assert round(npp.cum_idc[i], 3) == round(ci_check[i], 3)
 
-   
+
+## INCORPORATE PROJECT INTO FSs
+
+def test_incorporate_deterministic_project_interest():
+    ut = Utility("check", time_horizon, hist)
+    ut.initialize_IS()
+    ut.initialize_CFS()
+    npp = Project()
+    npp.duration = 8.0
+    npp.epsilon = 2.0
+    npp.seek_alpha()
+    npp.spend_profile(ut)
+    npp.annual_capital_payment = npp.total_cost * mcd / (1 - (1+mcd)**(-term))
+    ut.finance_project(npp)
+    ut.incorporate_project(npp)
+    ut.refresh_IS(0)
+    ut.refresh_CFS(npp, 0)
+
+    check_interest = np.zeros(time_horizon + hist)
+    check_ebt = np.zeros(time_horizon + hist)
+    check_income_tax = np.zeros(time_horizon + hist)
+    check_net_income = np.zeros(time_horizon + hist)
+
+    with open('./data/profiles/omnibus-checkfile-static.csv', 'r') as df:
+        data = csv.reader(df, delimiter = ',', quotechar = '\"')
+        for row in data:
+            check_interest[:int(m.ceil(npp.duration))] = row[1:int(m.ceil(npp.duration))+1] if row[0] == 'PostInterestExpense' else check_interest[:int(m.ceil(npp.duration))]
+            check_ebt[:int(m.ceil(npp.duration))] = row[1:int(m.ceil(npp.duration))+1] if row[0] == 'PostEBT' else check_ebt[:int(m.ceil(npp.duration))]
+            check_income_tax[0:] = row[1:] if row[0] == 'PostIncomeTax' else check_income_tax
+            check_net_income[0:] = row[1:] if row[0] == 'PostNetIncome' else check_net_income
+
+    assert round(ut.interest[5], 3) == round(check_interest[5], 3)
+    assert round(ut.ebt[5], 3) == round(check_ebt[5], 3)
+    assert round(ut.income_tax[5], 3) == round(check_income_tax[5], 3)
+    assert round(ut.net_income[5], 3) == round(check_net_income[5], 3)
+
+
+
