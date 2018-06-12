@@ -3,6 +3,13 @@
 \usepackage{cite}
 \usepackage{array}
 \usepackage{booktabs}
+\usepackage{mathtools}
+\usepackage{makecell}
+\usepackage{changepage}
+
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
 
 \begin{document}
 
@@ -10,7 +17,7 @@
 
 \subsection{Fundamental Expenditure Behavior}
 
-The underlying distribution of expenditures (independent of cost escalation and schedule delay), $I_0(t)$, is assumed to be a sinusoid:
+The underlying distribution of expenditures (independent of cost escalation and schedule delay), $I_0(t)$, is assumed to be sinusoidal:
 
 \begin{equation}
   I_0(t,d) = K \frac{\pi}{2d} \, \sin\left( \frac{\pi t}{d} \right),
@@ -34,45 +41,113 @@ These functions have the feature that evaluating $E_0$ at the end of the project
 \end{equation}
 
 
-\subsection{Schedule Slip}
-For eq. \eqref{e0-def} to be valid, $d$ must be computed ahead of time and not changed during the course of the project.
-(On-the-fly schedule slip will be implemented in future versions.) \\
+\subsection{Characterization of Cost and Schedule Escalation Probability Distributions}
+Historical data on cost escalation and schedule slip was obtained from the 1985 EIA report ``An Analysis of Nuclear Power Plant Construction Costs''.
+The report provides information on anticipated project completion dates at project start (0\% completion), 25\%, 50\%, 75\%, 90\%, and final project completion.
+The cost escalation and schedule slip that occurs between project stages is likely to be of significant interest.
+However, as these outcomes are expected not to be probabilistically independent (that is, the outcome in one period changes expectations about outcomes in another period), in the current version of the model total overall escalation multipliers are used.
 
-Historically, schedule slip typically occurred continuously throughout all stages of projects, with the effects being most severe towards the end of each project.
-DOE/EIA-0485 provides data for cost and schedule escalation for nuclear project in the US up to 1986. 
-For each project, expected completion dates are provided at each of six milestones: Project start, 25\% completion, 50\% completion, 75\% completion, 90\% completion, and 100\% completion. \\
+These slip multipliers ($\epsilon$) are calculated from the historical data by:
 
-Using this data, probability distributions were developed for the schedule slip factors during each phase (0-25\% completion, 25-50\% completion, and so on).
-Various probability distributions were examined against the data; the gamma distribution produced the closest match.
-Data for each completion stage were fitted to gamma distributions $S_i$ with the following parameters:
-
-%\begin{table}[!htbp]
-\begin{center}
-$\mathrm{S_i} \sim \Gamma \left( \alpha_i, \beta_i \right)$\\
-\begin{tabular} {| c | c | c |} \hline
-%  \multicolumn{5}{c}{$\mathrm{X} \sim \Gamma \left( \alpha, \beta \right)$} \\
-  Project Stage & $\alpha_i$ & $\beta_i$ \\ \hline
-  0-25\% & 2.422 & 0.419 \\ \hline
-  25-50\% & 4.219 & 0.166 \\ \hline
-  50-75\% & 7.923 & 0.018 \\ \hline
-  75-90\% & 3.555 & 0.227 \\ \hline
-  90-100\% & 8.758 & 0.026 \\ \hline
-\end{tabular}
-\end{center}
-%\end{table}
-
-Each project has a statically-defined initial schedule estimate, $d_0$, pulled from the reactor project profile.
-This duration is divided among five project stages of equal length.
-Each stage's duration $d_i$ is then escalated by a factor generated from the appropriate probability distribution.
+\begin{adjustwidth}{-1.5cm}{-1.5cm}
+\begin{equation}
+  \epsilon_{cost} = \frac{\mathrm{Overnight\, Cost\, (OC)\, at\, 90\%\, Completion} - \mathrm{OC\, at\, 0\%\, Completion}}{\mathrm{OC\, at\, 0\%\, Completion}} - 1
+\end{equation}
+\end{adjustwidth}
 
 \begin{equation}
-  d_i = \frac{\Gamma \left( \alpha_i, \beta_i \right) \, d_0}{5}
+  \epsilon_{schedule} = \frac{\mathrm{Actual \, Completion \, Date} - \mathrm{Project \, Start \, Date}}{\mathrm{Expected \, Initial \, Completion \, Date} - \mathrm{Project \, Start \, Date}} - 1
 \end{equation}
 
-The total project duration $d$ is the total of the durations of all stages:
+The R library $\mathrm{fitdistrplus}$ was used to fit the empirical data to exponential, gamma, and normal distributions.
+The dataset itself also needed to be pretreated before analysis, due to the presence of negative values and outliers.
+
+Exponential and gamma distributions cannot produce samples of value less than or equal to zero, so negative entries in the empirical data needed to be removed or accounted for.
+It was possible that these negative values were themselves outliers, so in one case negative values were simply removed from the dataset.
+In the other case, the entire dataset was shifted upwards by a factor of $\abs{min\{data\}} + 0.001$ prior to fitting the distribution.
+Subsequent samples from these shifted-range distributions would have the same shift factor subtracted out in order to recreate the original distribution with potential for negative-valued outputs.
+
+Outliers were determined by examining the histogram for the cost and schedule $\epsilon$ datasets, and removing values that appeared to create isolated ``islands'' of high values, as in the following images:
+
+\begin{centering}
+[image here]
+\end{centering}
+
+In all, ten distributions with different dataset treatments were examined; Table~\ref{cesc} and Table~\ref{sesc}  show the results.
+Bolded lines indicate members of distribution families with the smallest parameter errors---these were considered in greater detail.
+
+\begin{adjustwidth}{-1cm}{-1cm}
+\begin{center}
+\begin{table}[!htbp]
+\caption{Cost escalation distribution candidates.} \vspace{3 mm}
+\begin{tabular} {| c | c | c | c | c | c |} \hline
+  Distribution & \makecell{Negative Value \\ Treatment} & Outliers & Parameter Type & Value & Error \\  \hline
+  Exponential & Removed & Retained & Rate & 0.58281 & 0.06775 \\ \hline
+  Exponential & Removed & Removed & Rate & 0.67580 & 0.08077 \\ \hline
+  \textbf{Exponential} & \textbf{Range Shifted} & \textbf{Retained} & \textbf{Rate} & \textbf{0.51810} & \textbf{0.06023} \\ \hline
+   & & & \textbf{Shift} & \textbf{0.21431} & \\ \hline
+  Exponential & Range Shifted & Removed & Rate & 0.68499 & 0.08129 \\ \hline
+   & & & Shift & 0.001 & \\ \hline
+  Gamma & Removed & Retained & Shape & 2.53879 & 0.39305 \\ \hline
+   & & & Rate & 1.47949 & 0.25321 \\ \hline
+  Gamma & Removed & Removed & Shape & 3.72438 & 0.60346 \\ \hline
+   & & & Rate & 2.51692 & 0.43659 \\ \hline
+  Gamma & Range Shifted & Retained & Shape & 3.30592 & 0.51841 \\ \hline
+   & & & Rate & 1.71275 & 0.29005 \\ \hline
+   & & & Shift & 0.21431 & \\ \hline
+  \textbf{Gamma} & \textbf{Range Shifted} & \textbf{Removed} & \textbf{Shape} & \textbf{2.35959} & \textbf{0.37145} \\ \hline
+   & & & \textbf{Rate} & \textbf{1.61611} & \textbf{0.28339} \\ \hline
+   & & & \textbf{Shift} & \textbf{0.001} & \\ \hline
+  Normal & Retained & Retained & Mean & 1.71581 & 0.15555 \\ \hline
+   & & & $\sigma$ & 1.33809 & 0.10999 \\ \hline
+  \textbf{Normal} & \textbf{Retained} & \textbf{Removed} & \textbf{Mean} & \textbf{1.45888} & \textbf{0.09143} \\ \hline
+   & & & \textbf{$\sigma$} & \textbf{0.77042} & \textbf{0.06465} \\ \hline
+\end{tabular}
+\label{cesc}
+\end{table}
+
+
+\begin{table}[!htbp]
+\caption{Schedule escalation distribution candidates.} \vspace{3 mm}
+\begin{tabular} {| c | c | c | c | c | c |} \hline
+  Distribution & \makecell{Negative Value \\ Treatment} & Outliers & \makecell{Parameter \\ Type} & Value & Error \\  \hline
+  Exponential & Removed & Retained & Rate & 0.98296 & 0.11427 \\ \hline
+  Exponential & Removed & Removed & Rate & 1.03675 & 0.12218 \\ \hline
+  \textbf{Exponential} & \textbf{Range Shifted} & \textbf{Retained} & \textbf{Rate} & \textbf{0.94779} & \textbf{0.10944} \\ \hline
+   & & & \textbf{Shift} & \textbf{0.05199} & \\ \hline
+  Exponential & Range Shifted & Removed & Rate & 0.99738 & 0.11673 \\ \hline
+   & & & Shift & 0.05199 & \\ \hline
+  Gamma & Removed & Retained & Shape & 2.59712 & 0.40257 \\ \hline
+   & & & Rate & 2.55296 & 0.43647 \\ \hline
+  Gamma & Removed & Removed & Shape & 2.84002 & 0.44833 \\ \hline
+   & & & Rate & 2.94449 & 0.50838 \\ \hline
+  \textbf{Gamma} & \textbf{Range Shifted} & \textbf{Retained} & \textbf{Shape} & \textbf{2.09296} & \textbf{0.31831} \\ \hline
+   & & & \textbf{Rate} & \textbf{1.98372} & \textbf{0.34072} \\ \hline
+   & & & \textbf{Shift} & \textbf{0.05199} & \\ \hline
+  Gamma & Range Shifted & Removed & Shape & 2.21949 & 0.34335 \\ \hline
+   & & & Rate & 2.21368 & 0.38408 \\ \hline
+   & & & Shift & 0.05199 & \\ \hline
+  Normal & Retained & Retained & Mean & 1.00309 & 0.07611 \\ \hline
+   & & & $\sigma$ & 0.65911 & 0.05382 \\ \hline
+  \textbf{Normal} & \textbf{Retained} & \textbf{Removed} & \textbf{Mean} & \textbf{0.95064} & \textbf{0.06841} \\ \hline
+   & & & \textbf{$\sigma$} & \textbf{0.58447} & \textbf{0.04837} \\ \hline
+\end{tabular}
+\label{sesc}
+\end{table}
+\end{center}
+\end{adjustwidth}
+
+
+\subsection{Schedule Slip}
+
+For Eq.~\eqref{e0-def} to be valid, $d$ must be computed ahead of time and not changed during the course of the project.
+(On-the-fly schedule slip will be implemented in future versions.) \\
+
+Each project has a statically-defined initial schedule estimate, $d_0$, pulled from the reactor project profile.
+The final duration $d$ is generated by sampling a schedule delay factor from the previously-parameterized gamma distribution.
 
 \begin{equation}
-  d = \sum_{i=1}^5 d_i
+  d = \left[ 1 + \Gamma \left( 2.09296, 0.50410 \right) \right] \, d_0
 \end{equation}
 
 \subsection{Cost Escalation}
@@ -99,19 +174,20 @@ This model escalates the fundamental expenditure profile $I_0(t)$ with an expone
 An appropriate exponential growth rate $\alpha$ must be determined, in order to reproduce the desired value of $E_e(d)$:
 
 \begin{equation}
+\label{int_alpha}
   \int_0^d \! {I_0(t) \, e^{\alpha t} \, \mathrm{d}t} = E_0(d) \, \left( 1 + \epsilon \right)
 \end{equation}
 
 \subsubsection{Determining the Appropriate Escalation Rate Factor, $\alpha$}
 
-Evaluating the integral and some algebraic manipulation produce the analytically unsolvable expression:
+From Eq.~\eqref{int_alpha}, evaluating the integral and some algebraic manipulation produce the analytically unsolvable expression:
 
 \begin{equation} \label{non-an}
   e^{\alpha d} - \frac{2 (1 + \epsilon) {\alpha}^2 d^2}{\pi^2} = 2 (1 + \epsilon) - 1
 \end{equation}
 
 The bisection method is an efficient way to evaluate this expression for alpha, using probabilistically-generated values of $\epsilon$ and $d$.
-To guarantee that such a search will be able to locate the appropriate value, it must be demonstrated that the following function $f(\alpha, d, \epsilon)$ is monotonic over all possible values of $\alpha$, $d$, and $\epsilon$.
+To guarantee that such a search will be able to locate the appropriate value, it must be demonstrated that the following function $f(\alpha, d, \epsilon)$ is monotonic over all possible values of $\alpha$, $d$, and $\epsilon$:
 
 \begin{equation}
   f(\alpha, d, \epsilon) = e^{\alpha d} - \frac{2 (1 + \epsilon) \alpha^2 d^2}{\pi^2} - 2 (1 + \epsilon) + 1
